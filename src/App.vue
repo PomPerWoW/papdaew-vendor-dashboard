@@ -1,12 +1,15 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router';
-import HelloWorld from './components/HelloWorld.vue';
+import SideBar from './components/SideBar.vue';
 </script>
 
 <template>
-
-
-  <RouterView />
+  <div class="app-container">
+    <SideBar v-if="!$route.meta.hideSidebar" />
+    <div class="main-content">
+      <RouterView />
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -21,7 +24,17 @@ header {
 }
 
 
+.app-container {
+  display: flex;
+  height: 100vh;
+}
 
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #f9fafb;
+  padding: 20px;
+}
 @media (min-width: 1024px) {
   header {
     display: flex;

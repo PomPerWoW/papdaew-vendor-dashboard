@@ -15,6 +15,7 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterVendor,
+      meta: { hideSidebar: true },
     },
     {
       path: '/queue-vendor',
