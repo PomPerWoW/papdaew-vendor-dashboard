@@ -33,7 +33,7 @@ header {
   flex: 1;
   overflow-y: auto;
   background-color: #f9fafb;
-  padding: 20px;
+  /* padding: 20px; */
 }
 @media (min-width: 1024px) {
   header {

@@ -1,5 +1,5 @@
 <template>
-    <div class="container">
+    <div class="container1">
       <div class="illustration">
         <!-- <img src="/path-to-your-illustration.png" alt="Illustration" /> -->
       </div>
@@ -53,7 +53,7 @@
             </div>
           </div>
   
-          <button type="submit">Register</button>
+          <button type="submit" class="button1">Register</button>
         </form>
       </div>
     </div>
@@ -97,12 +97,12 @@
   const submitForm = () => {
     console.log("Form Data:", form.value);
     console.log("Uploaded Files:", selectedFiles.value);
-    alert("Form submitted successfully!");
+    alert("Form submitted successf  ully!");
   };
   </script>
   
   <style>
-  .container {
+  .container1 {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -145,7 +145,7 @@
     width: 100%;
   }
   
-  button {
+  .button1 {
     margin-top: 1.5rem;
     padding: 0.7rem;
     background-color: #6b9080;
@@ -153,9 +153,10 @@
     border: none;
     border-radius: 5px;
     cursor: pointer;
+    width: 100%;
   }
   
-  button:hover {
+  .button1:hover {
     background-color: #4d695d;
   }
   

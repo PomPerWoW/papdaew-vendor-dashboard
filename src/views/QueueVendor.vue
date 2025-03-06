@@ -1,4 +1,5 @@
 <template>
+  <div class="main">
   <h1>Queue</h1>
   <div class="container">
     <div class="queuebox">C011</div>
@@ -17,11 +18,15 @@
     <span class="queue">C012</span>
     <span class="queue">C013</span>
     <span class="queue">C014</span>
-  </div>
+  </div></div>
 </template>
 
 <script setup></script>
 <style lang="css">
+
+.main{
+  padding: 20px;
+}
 h1 {
   font-weight: 500;
 }
