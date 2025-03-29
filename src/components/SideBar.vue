@@ -20,7 +20,7 @@
         <Icon icon="jam:branch" class="material-icons"/>
         <span class="text">Branch</span>
       </router-link>
-      <router-link to="/contact" class="button">
+      <router-link to="/queue-vendor" class="button">
         <Icon icon="heroicons:queue-list-solid" class="material-icons"/>
         <span class="text">Queue</span>
       </router-link>

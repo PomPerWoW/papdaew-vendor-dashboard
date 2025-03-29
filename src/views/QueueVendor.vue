@@ -37,9 +37,8 @@ hr {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 40%;
   font-size: 128px;
-  background-color: #f5f5f5;
+  
 }
 .nextup {
   margin: 2.5rem 0 2.5rem 0;
@@ -57,9 +56,12 @@ hr {
 .container {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   height: 40vh;
   margin: 0rem 10rem 0 10rem;
   border-radius: 15px;
+  background-color: #f5f5f5;
 }
 button {
   margin: 0 3.3rem 0 0;
