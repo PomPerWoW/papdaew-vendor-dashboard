@@ -1,14 +1,18 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterView } from 'vue-router';
 import SideBar from './components/SideBarVendor.vue';
+import { Button } from '@/components/ui/button';
 </script>
 
 <template>
-  <div class="app-container">
+  <!-- <div class="app-container">
     <SideBar v-if="!$route.meta.hideSidebarVendor" />
     <div class="main-content">
       <RouterView />
     </div>
+  </div> -->
+  <div>
+    <Button>Click me</Button>
   </div>
 </template>
 
@@ -22,7 +26,6 @@ header {
   display: block;
   margin: 0 auto 2rem;
 }
-
 
 .app-container {
   display: flex;
@@ -51,7 +54,5 @@ header {
     place-items: flex-start;
     flex-wrap: wrap;
   }
-
-
 }
 </style>
