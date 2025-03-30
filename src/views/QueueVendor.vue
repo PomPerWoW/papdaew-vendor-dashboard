@@ -5,10 +5,10 @@
     <div class="queuebox">C011</div>
   </div>
   <div class="bt-align">
-    <button>Close</button>
-    <button>Start</button>
-    <button>Next</button>
-    <button style="background-color: #b57a65">Cancel</button>
+    <button class="process-btn">Close</button>
+    <button class="process-btn">Start</button>
+    <button class="process-btn">Next</button>
+    <button style="background-color: #b57a65" class="process-btn">Cancel</button>
   </div>
   <div>
     <div class="nextup">
@@ -63,7 +63,7 @@ hr {
   border-radius: 15px;
   background-color: #f5f5f5;
 }
-button {
+.process-btn {
   margin: 0 3.3rem 0 0;
   padding: 2rem 4rem;
   background-color: #6b9080;
@@ -77,5 +77,6 @@ button {
   margin: 1rem 10rem 0;
   display: flex;
   flex-direction: row;
+  justify-content: center;
 }
 </style>

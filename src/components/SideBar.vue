@@ -16,9 +16,9 @@
         <Icon icon="garden:customer-lists-fill-26" class="material-icons"/>
         <span class="text">Customer</span>
       </router-link>
-      <router-link to="/team" class="button">
+      <router-link to="/contract" class="button">
         <Icon icon="jam:branch" class="material-icons"/>
-        <span class="text">Branch</span>
+        <span class="text">Contract</span>
       </router-link>
       <router-link to="/queue-vendor" class="button">
         <Icon icon="heroicons:queue-list-solid" class="material-icons"/>

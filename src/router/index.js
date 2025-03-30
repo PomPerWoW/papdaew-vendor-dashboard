@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import RegisterVendor from '../views/RegisterVendor.vue';
 import QueueVendor from '../views/QueueVendor.vue';
+import ContractVendor from '../views/ContractVendor.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,11 @@ const router = createRouter({
       path: '/queue-vendor',
       name: 'queue-vendor',
       component: QueueVendor,
+    },
+    {
+      path: '/contract',
+      name: 'contract',
+      component: ContractVendor,
     }
   ],
 });
