@@ -12,11 +12,11 @@
         <Icon icon="material-symbols:dashboard-rounded" class="material-icons"/>
         <span class="text">Dashboard</span>
       </router-link>
-      <router-link to="/about" class="button">
+      <router-link to="/customer-vendor" class="button">
         <Icon icon="garden:customer-lists-fill-26" class="material-icons"/>
         <span class="text">Customer</span>
       </router-link>
-      <router-link to="/contract" class="button">
+      <router-link to="/contract-vendor" class="button">
         <Icon icon="jam:branch" class="material-icons"/>
         <span class="text">Contract</span>
       </router-link>

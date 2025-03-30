@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import RegisterVendor from '../views/RegisterVendor.vue';
 import QueueVendor from '../views/QueueVendor.vue';
 import ContractVendor from '../views/ContractVendor.vue';
+import CustomerVendor from '../views/CustomerVendor.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,7 +17,7 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterVendor,
-      meta: { hideSidebar: true },
+      meta: { hideSidebarVendor: true },
     },
     {
       path: '/queue-vendor',
@@ -24,9 +25,14 @@ const router = createRouter({
       component: QueueVendor,
     },
     {
-      path: '/contract',
+      path: '/contract-vendor',
       name: 'contract',
       component: ContractVendor,
+    },
+    {
+      path: '/customer-vendor',
+      name: 'customer',
+      component: CustomerVendor,
     }
   ],
 });

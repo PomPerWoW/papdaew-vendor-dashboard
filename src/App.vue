@@ -1,11 +1,11 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router';
-import SideBar from './components/SideBar.vue';
+import SideBar from './components/SideBarVendor.vue';
 </script>
 
 <template>
   <div class="app-container">
-    <SideBar v-if="!$route.meta.hideSidebar" />
+    <SideBar v-if="!$route.meta.hideSidebarVendor" />
     <div class="main-content">
       <RouterView />
     </div>
