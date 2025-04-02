@@ -1,19 +1,18 @@
 <script setup>
 import { RouterView } from 'vue-router';
 import SideBar from './components/SideBarVendor.vue';
-import { Button } from '@/components/ui/button';
+import Button from "primevue/button"
 </script>
 
 <template>
-  <!-- <div class="app-container">
+  <div class="app-container">
     <SideBar v-if="!$route.meta.hideSidebarVendor" />
     <div class="main-content">
       <RouterView />
     </div>
-  </div> -->
-  <div>
-    <Button>Click me</Button>
   </div>
+  <!-- <div><Button label="hi"/></div> -->
+
 </template>
 
 <style scoped>
