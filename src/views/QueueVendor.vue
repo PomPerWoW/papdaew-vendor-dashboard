@@ -61,7 +61,7 @@ hr {
   height: 40vh;
   margin: 0rem 10rem 0 10rem;
   border-radius: 15px;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
 }
 .process-btn {
   margin: 0 3.3rem 0 0;

@@ -33,4 +33,25 @@
 </style>
 <script setup>
 import { Icon } from '@iconify/vue';
+import { ref } from 'vue';
+const mockData = ref([
+  {
+    name: 'Views',
+    number: 1234,
+    data: -11.0,
+    trend: 'decrease'
+  },
+  {
+    name: 'Total Customers',
+    number: 5678,
+    data: 5.2,
+    trend: 'increase'
+  },
+  {
+    name: 'Active Now',
+    number: 342,
+    data: 2.8,
+    trend: 'increase'
+  }
+]);
 </script>

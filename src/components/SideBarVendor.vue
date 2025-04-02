@@ -7,7 +7,7 @@
     <h3>Vendor Management System</h3>
     <hr />
     <div class="menu">
-      <router-link to="/" class="button">
+      <router-link to="/dashboard-vendor" class="button">
         <!-- <span class="material-icons">home</span> -->
         <Icon icon="material-symbols:dashboard-rounded" class="material-icons"/>
         <span class="text">Dashboard</span>

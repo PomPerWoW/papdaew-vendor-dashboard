@@ -99,11 +99,10 @@
           :showFilterMenu="false"
           style="min-width: 12rem"
         >
-          <template #body="{ data }">
-            <Tag
-              :value="data.queue"
-              :severity="getSeverity(data.queue)"
-            />
+       <template #body="{ data }">
+            <div class="flex items-center gap-2">
+              <span>{{ data.queue }}</span>
+            </div>
           </template>
           
         </Column>
