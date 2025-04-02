@@ -5,7 +5,7 @@ import QueueVendor from '../views/QueueVendor.vue';
 import ContractVendor from '../views/ContractVendor.vue';
 import CustomerVendor from '../views/CustomerVendor.vue';
 import DashboardVendor from '@/views/DashboardVendor.vue';
-
+import HelpVendor from '@/views/HelpVendor.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -39,6 +39,11 @@ const router = createRouter({
       path: '/dashboard-vendor',
       name: 'dashboard',
       component: DashboardVendor
+    },
+    { 
+      path: '/help-vendor',
+      name: 'help',
+      component: HelpVendor,
     }
   ],
 });

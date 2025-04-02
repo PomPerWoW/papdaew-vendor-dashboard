@@ -260,7 +260,6 @@ h3 {
   grid-column: span 2;
 }
 .table {
-    background-color: white;
     padding: 1.25rem;
     border-radius: 20px;
     margin-bottom: 1.5rem;

@@ -194,7 +194,7 @@ const branchs = ref([
   { name: 'Robinson Ladkrabang' },
   { name: 'Central Bangna' }
 ]);
-const statuses = ref(['Inactive', 'Active', 'new',  'Blacklist','unqualified' ]);
+const statuses = ref(['Inactive', 'Active', 'New',  'Blacklist','unqualified' ]);
 const loading = ref(true);
 
 // Mock customer data since CustomerService is not available
@@ -301,7 +301,7 @@ const mockCustomers = [
         phone: '0812349821',
         company: 'Truhlar And Truhlar Attys',
         date: '2018-11-21',
-        status: 'Active',
+        status: 'New',
         verified: true,
         activity: 76,
         branch: {name: 'Seacon Bangkaphi'},
@@ -338,10 +338,10 @@ const getSeverity = (status) => {
             return 'danger';
         case 'Active':
             return 'success';
-        case 'new':
-            return { backgroundColor: '#2196F3', color: '#ffffff' };
+        case 'New':
+            return 'info';
         case 'Blacklist':
-            return { backgroundColor: '#9E9E9E', color: '#ffffff' };
+            return 'contrast';
         default:
             return null;
     }

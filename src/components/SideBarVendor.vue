@@ -9,23 +9,29 @@
     <div class="menu">
       <router-link to="/dashboard-vendor" class="button">
         <!-- <span class="material-icons">home</span> -->
-        <Icon icon="material-symbols:dashboard-rounded" class="material-icons"/>
+        <Icon
+          icon="material-symbols:dashboard-rounded"
+          class="material-icons"
+        />
         <span class="text">Dashboard</span>
       </router-link>
       <router-link to="/customer-vendor" class="button">
-        <Icon icon="garden:customer-lists-fill-26" class="material-icons"/>
+        <Icon icon="garden:customer-lists-fill-26" class="material-icons" />
         <span class="text">Customer</span>
       </router-link>
       <router-link to="/contract-vendor" class="button">
-        <Icon icon="jam:branch" class="material-icons"/>
+        <Icon icon="jam:branch" class="material-icons" />
         <span class="text">Contract</span>
       </router-link>
       <router-link to="/queue-vendor" class="button">
-        <Icon icon="heroicons:queue-list-solid" class="material-icons"/>
+        <Icon icon="heroicons:queue-list-solid" class="material-icons" />
         <span class="text">Queue</span>
       </router-link>
       <router-link to="/contact" class="button">
-        <Icon icon="material-symbols:support-agent-rounded" class="material-icons"/>
+        <Icon
+          icon="material-symbols:support-agent-rounded"
+          class="material-icons"
+        />
         <span class="text">Support</span>
       </router-link>
     </div>
@@ -34,12 +40,18 @@
 
     <div class="menu">
       <router-link to="/contact" class="button">
-        <Icon icon="weui:setting-filled" class="material-icons"/>
+        <Icon icon="weui:setting-filled" class="material-icons" />
         <span class="text">Settings</span>
       </router-link>
-      <router-link to="/contact" class="button">
-        <Icon icon="material-symbols:help" class="material-icons"/>
+      <router-link to="/help-vendor" class="button">
+        <Icon icon="material-symbols:help" class="material-icons" />
         <span class="text">Help</span>
+      </router-link>
+    </div>
+    <div class="menu-end">
+      <router-link to="/contact" class="button">
+        <Icon icon="tabler:logout-2"  class="material-icons"/> 
+        <span class="text">Logout</span>
       </router-link>
     </div>
   </aside>
@@ -63,11 +75,11 @@ import { Icon } from '@iconify/vue';
   border-radius: 10px;
   /* margin: 2.5rem; */
 }
-.text{
-    font-size: 20px;
-    width: auto;
-    color: #555555;
-    transition: background 0.2s;
+.text {
+  font-size: 20px;
+  width: auto;
+  color: #555555;
+  transition: background 0.2s;
 }
 .logo {
   margin-bottom: 16px;
@@ -91,6 +103,11 @@ h3 {
   width: 100%;
 }
 
+.menu-end {
+  align-content: end;
+  width: 100%;
+  height: 100%;
+}
 hr {
   width: 90%;
   border: none;
@@ -110,12 +127,11 @@ hr {
 .button .material-icons {
   font-size: 36px;
   margin-right: 12px;
-  color: #A4C3B2;
+  color: #a4c3b2;
 }
 
 .text:hover {
-  color: #A4C3B2;
-
+  color: #a4c3b2;
 }
 
 @media (max-width: 1024px) {
