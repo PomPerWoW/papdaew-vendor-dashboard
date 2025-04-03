@@ -20,11 +20,11 @@
           <span class="text">Customer</span>
         </router-link>
         <router-link to="/vendorlist-admin" class="button">
-          <Icon icon="jam:branch" class="material-icons" />
+          <Icon icon="mdi:shop" class="material-icons" />
           <span class="text">Vendor</span>
         </router-link>
         <router-link to="/role-admin" class="button">
-          <Icon icon="heroicons:queue-list-solid" class="material-icons" />
+          <Icon icon="eos-icons:cluster-role" class="material-icons" />
           <span class="text">Role</span>
         </router-link>
         <router-link to="/contact" class="button">

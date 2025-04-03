@@ -1,5 +1,7 @@
 <template>
   <div class="main">
+    <h1>Vendor</h1>
+    <Divider />
     <div class="data-table">
       <h2>Vendor List</h2>
       <p>List of all customers</p>
@@ -134,7 +136,8 @@
 </template>
 
 <script setup>
-import DataWidget from '@/components/DataWidget.vue';
+
+import Divider from 'primevue/divider';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
