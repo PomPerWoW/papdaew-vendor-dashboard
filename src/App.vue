@@ -1,17 +1,29 @@
 <script setup>
 import { RouterView } from 'vue-router';
-import SideBar from './components/SideBarVendor.vue';
-import Button from "primevue/button"
+import SideBarVendor from './components/SideBarVendor.vue';
+import SideBarAdmin from './components/SideBarAdmin.vue';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+import { useUserStore } from './stores/counter.js';
+
+const route = useRoute();
+const userStore = useUserStore();
+
+const userRole = computed(() => userStore.role);
+
+// Determine if the sidebar should be hidden
+const hideSidebarVendor = computed(() => route.meta.hideSidebarVendor || userRole.value !== 'vendor');
+const hideSidebarAdmin = computed(() => userRole.value !== 'admin');
 </script>
 
 <template>
   <div class="app-container">
-    <SideBar v-if="!$route.meta.hideSidebarVendor" />
+    <SideBarVendor v-if="userRole === 'vendor' && !route.meta.hideSidebarVendor" />
+    <SideBarAdmin v-if="userRole === 'admin' && !route.meta.hideSidebarAdmin" />
     <div class="main-content">
       <RouterView />
     </div>
   </div>
-  <!-- <div><Button label="hi"/></div> -->
 
 </template>
 
