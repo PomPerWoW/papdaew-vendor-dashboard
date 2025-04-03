@@ -13,7 +13,7 @@ const userRole = computed(() => userStore.role);
 
 // Determine if the sidebar should be hidden
 const hideSidebarVendor = computed(() => route.meta.hideSidebarVendor || userRole.value !== 'vendor');
-const hideSidebarAdmin = computed(() => userRole.value !== 'admin');
+const hideSidebarAdmin = computed(() => route.meta.hideSidebarAdmin || userRole.value !== 'admin');
 </script>
 
 <template>

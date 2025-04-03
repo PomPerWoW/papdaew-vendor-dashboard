@@ -39,7 +39,7 @@
       <!-- <div class="flex"></div> -->
   
       <div class="menu">
-        <router-link to="/contact" class="button">
+        <router-link to="/setting-admin" class="button">
           <Icon icon="weui:setting-filled" class="material-icons" />
           <span class="text">Settings</span>
         </router-link>

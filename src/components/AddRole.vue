@@ -1,39 +1,33 @@
 <template>
   <div v-if="isOpen" class="modal-overlay">
     <div class="modal-content">
-      <h2>Add Contract</h2>
+      <h2>Add Role</h2>
 
       <form @submit.prevent="submitForm">
-        <div class="insideform">
-          <div style="margin-right: 1.2rem; width: 205px">
-            <label>Manager Name:</label>
+        <div class="">
+          <div>
+            <label>Name:</label>
             <InputText v-model="formData.name" type="text" variant="filled" />
           </div>
-          <div style="width: 205px">
-            <label>Email:</label>
-            <InputText v-model="formData.email" type="text" variant="filled" />
+        </div>
+        <div class="">
+          <div style="display: flex; flex-direction: column">
+            <label>Role:</label>
+            <MultiSelect
+              v-model="selectedCities"
+              :options="cities"
+              optionLabel="role"
+              filter
+              placeholder="Select Roles"
+              :maxSelectedLabels="3"
+            />
           </div>
         </div>
-        <div class="insideform">
-          <div style="margin-right: 1.2rem; width: 205px">
-            <label>Telephone Number:</label>
-            <InputText v-model="formData.telephone" type="text" variant="filled" />
-          </div>
-          <div style="width: 205px">
-            <label>Line:</label>
-            <InputText v-model="formData.line" type="text" variant="filled" />
-          </div>
-        </div>
-        <div>
-          <label>Address:</label>
-          <Textarea v-model="formData.address" autoResize rows="5" cols="30" />
-        </div>
-        <div>
-          <label>Upload your QR:</label>
-          <input type="file" @change="handleFileUpload" />
-        </div>
+
         <div class="button-container">
-          <button type="button" @click="emit('close')" class="form-btn">Cancel</button>
+          <button type="button" @click="emit('close')" class="form-btn">
+            Cancel
+          </button>
           <button type="submit" class="form-btn">Submit</button>
         </div>
       </form>
@@ -44,17 +38,14 @@
 <script setup>
 import { ref, defineProps, defineEmits } from 'vue';
 import InputText from 'primevue/inputtext';
-import Textarea from 'primevue/textarea';
+import MultiSelect from 'primevue/multiselect';
 
 const props = defineProps({ isOpen: Boolean });
 const emit = defineEmits(['close']);
 
 const formData = ref({
   managerName: '',
-  email: '',
-  line: '',
-  telephone: '',
-  address: '',
+
 });
 
 const uploadedFile = ref(null);
@@ -66,6 +57,9 @@ const submitForm = () => {
   console.log('Submitted Data:', formData.value);
   emit('close');
 };
+
+const selectedCities = ref();
+const cities = ref([{ role: 'Vendor' }, { role: 'admin' }]);
 </script>
 
 <style>
@@ -93,22 +87,6 @@ const submitForm = () => {
 .modal-content h2 {
   font-weight: 500;
 }
-/* Style form fields */
-input,
-textarea {
-  width: 100%;
-  padding: 8px;
-  margin: 5px 0 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background-color: #EEEEEE;
-}
-
-.insideform {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
 /* Style buttons */
 .button-container {
   display: flex;
@@ -128,7 +106,7 @@ textarea {
 }
 
 .form-btn:last-child {
-  background: #6B9080;
+  background: #6b9080;
   color: white;
 }
 </style>

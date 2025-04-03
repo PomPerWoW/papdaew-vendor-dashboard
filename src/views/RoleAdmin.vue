@@ -1,8 +1,29 @@
 <template>
   <div class="main">
-    <h1>Role</h1>
-    <div >
-      <Tabs value="0"  >
+    <div class="head">
+      <h1>Role</h1>
+      <button
+        style="
+          background-color: #a4c3b2;
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 5px;
+          border: none;
+          text-align: center;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+        @click="showModal = true"
+      >
+        <Icon icon="icon-park-outline:add-one" width="20" height="20" />
+        <span>Add Contract</span>
+      </button>
+      <AddRole :isOpen="showModal" @close="showModal = false" />
+    </div>
+
+    <div style="margin-top: 1rem;">
+      <Tabs value="0">
         <TabList>
           <Tab value="0">All users</Tab>
           <Tab value="1">User Management role</Tab>
@@ -155,7 +176,14 @@
             <h4>Queue Management</h4>
             <div class="body-actions">
               <p>Join queues.</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -163,7 +191,14 @@
             </div>
             <div class="body-actions">
               <p>Monitor queue status.</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -171,7 +206,14 @@
             </div>
             <div class="body-actions">
               <p>Adjust queue capacity</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -180,7 +222,14 @@
             <h4>Reservation</h4>
             <div class="body-actions">
               <p>Make reservations</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -188,7 +237,14 @@
             </div>
             <div class="body-actions">
               <p>Configure reservations</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -197,7 +253,14 @@
             <h4>Communicate</h4>
             <div class="body-actions">
               <p>Communicate between Individual and Vendor</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -205,7 +268,14 @@
             </div>
             <div class="body-actions">
               <p>Handle customer complaints</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -214,7 +284,14 @@
             <h4>Security</h4>
             <div class="body-actions">
               <p>View security logs</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
@@ -222,13 +299,19 @@
             </div>
             <div class="body-actions">
               <p>Modify encryption settings</p>
-              <div style="display: flex; gap: 12rem; flex-direction: row; margin-right: 1rem;">
+              <div
+                style="
+                  display: flex;
+                  gap: 12rem;
+                  flex-direction: row;
+                  margin-right: 1rem;
+                "
+              >
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
                 <Checkbox v-model="checked" binary />
               </div>
             </div>
-            
           </TabPanel>
         </TabPanels>
       </Tabs>
@@ -258,7 +341,7 @@ h3 {
 h4 {
   font-weight: 500;
   background-color: aliceblue;
-  padding: 0.5rem 0 0.5rem 0.25rem; ;
+  padding: 0.5rem 0 0.5rem 0.25rem;
 }
 </style>
 <script setup>
@@ -277,9 +360,14 @@ import Select from 'primevue/select';
 import Checkbox from 'primevue/checkbox';
 import IconField from 'primevue/iconfield';
 import InputIcon from 'primevue/inputicon';
+import AddRole from '@/components/AddRole.vue';
+import { Icon } from '@iconify/vue';
 import { ref, onMounted } from 'vue';
 import { FilterMatchMode } from '@primevue/core/api';
 
+
+//moodal
+const showModal = ref(false);
 //checkbox
 const checked = ref(false);
 

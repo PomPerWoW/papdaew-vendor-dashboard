@@ -11,6 +11,8 @@ import DashBoardAdmin from '@/views/DashBoardAdmin.vue';
 import CustomerAdmin from '@/views/CustomerAdmin.vue';
 import VendorlistAdmin from '@/views/VendorlistAdmin.vue';
 import RoleAdmin from '@/views/RoleAdmin.vue';
+import SettingVendor from '@/views/SettingVendor.vue';
+import SettingAdmin from '@/views/SettingAdmin.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -24,6 +26,7 @@ const router = createRouter({
       name: 'register',
       component: RegisterVendor,
       meta: { hideSidebarVendor: true },
+      meta: { hideSidebarAdmin: true },
     }, //vendor
     {
       path: '/queue-vendor',
@@ -49,7 +52,7 @@ const router = createRouter({
       component: DashboardVendor,
       meta: { role: 'vendor' },
     },
-    { 
+    {
       path: '/help-vendor',
       name: 'help',
       component: HelpVendor,
@@ -78,7 +81,19 @@ const router = createRouter({
       name: 'role-admin',
       component: RoleAdmin,
       meta: { role: 'admin' },
-    }
+    },
+    {
+      path: '/setting-vendor',
+      name: 'setting-vendor',
+      component: SettingVendor,
+      meta: { role: 'vendor' },
+    },
+    {
+      path: '/setting-admin',
+      name: 'setting-admin',
+      component: SettingAdmin,
+      meta: { role: 'admin' },
+    },
   ],
 });
 
