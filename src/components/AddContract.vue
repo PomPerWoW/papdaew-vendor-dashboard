@@ -33,8 +33,8 @@
           <input type="file" @change="handleFileUpload" />
         </div>
         <div class="button-container">
-          <button type="button" @click="emit('close')">Cancel</button>
-          <button type="submit">Submit</button>
+          <button type="button" @click="emit('close')" class="form-btn">Cancel</button>
+          <button type="submit" class="form-btn">Submit</button>
         </div>
       </form>
     </div>
@@ -114,18 +114,18 @@ textarea {
   margin-top: 10px;
 }
 
-button {
+.form-btn {
   padding: 8px 12px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-button:first-child {
+.form-btn:first-child {
   background: #ccc;
 }
 
-button:last-child {
+.form-btn:last-child {
   background: #6B9080;
   color: white;
 }
