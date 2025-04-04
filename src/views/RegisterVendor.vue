@@ -15,61 +15,56 @@
             <InputText v-model="form.email" type="text" variant="filled" />
 
             <label for="password">Password :</label>
-            <InputText v-model="form.password" type="text" variant="filled" />
+            <InputText v-model="form.password" type="password" variant="filled" />
 
             <label for="copy_number">Copy of Number :</label>
             <InputText v-model="form.copy_number" type="text" variant="filled" />
-  
           </div>
           <div>
             <label for="branch">Branch :</label>
             <InputText v-model="form.branch" type="text" variant="filled" />
-  
 
             <label for="phone">Phone :</label>
             <InputText v-model="form.phone" type="text" variant="filled" />
-  
 
             <label for="Manager">Manager :</label>
             <InputText v-model="form.Manager" type="text" variant="filled" />
-  
 
             <label for="ManagerPhone">Manager Phone :</label>
             <InputText v-model="form.ManagerPhone" type="text" variant="filled" />
-  
           </div>
         </div>
 
         <label for="address">Address :</label>
         <Textarea v-model="form.address" autoResize rows="5" cols="30" />
 
-        <label for="image">Upload Image :</label>
-        <input
-          type="file"
-          id="image"
-          accept="image/*"
-          @change="handleFileUpload"
-          multiple
-        />
-
-        <div class="images">
-          <div
-            v-for="(src, index) in imageSrc"
-            :key="index"
-            class="images-lists"
-          >
-            <div class="image-container">
-              <img :src="src" class="image-style" />
-            </div>
-            <div class="cross-icon" @click="removeItem(index)">
-              <img src="./assets/cancel.svg" />
-            </div>
-            <p class="line-clamp-1 text-center">
-              {{ selectedFiles[index].name }}
-            </p>
-          </div>
+        <label>Upload Image:</label>
+        <div style="display: flex; justify-content: flex-start; margin: 1rem 0 1rem 0; align-items: center;">
+          <FileUpload 
+            mode="basic" 
+            accept="image/*" 
+            @select="onImageSelect" 
+            customUpload 
+            auto 
+            class="p-button-outlined" 
+            style="font-size: small;"
+          />
+          <span v-if="imageName" style="margin-left: 1rem;">Selected: {{ imageName }}</span>
         </div>
 
+        <label class="mt-4">Upload File:</label>
+        <div style="display: flex; justify-content: flex-start; margin: 1rem 0 0 0; align-items: center;">
+          <FileUpload 
+            mode="basic" 
+            accept=".pdf,.doc,.docx,.xls,.xlsx" 
+            @select="onFileSelect" 
+            customUpload 
+            auto 
+            class="p-button-outlined" 
+            style="font-size: small;"
+          />
+          <span v-if="fileName" style="margin-left: 1rem;">Selected: {{ fileName }}</span>
+        </div>
         <button type="submit" class="button1">Register</button>
       </form>
     </div>
@@ -78,8 +73,10 @@
 
 <script setup>
 import { ref } from 'vue';
+import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
+
 const form = ref({
   name: '',
   email: '',
@@ -90,33 +87,55 @@ const form = ref({
   Manager: '',
   ManagerPhone: '',
   address: '',
-  images: [],
 });
 
-const imageSrc = ref([]);
-const selectedFiles = ref([]);
 
-const handleFileUpload = e => {
-  const files = e.target.files || e.dataTransfer.files;
-  if (!files.length) return;
+const selectedImage = ref(null)
+const imageName = ref(null)
+const selectedFile = ref(null)
+const fileName = ref(null)
 
-  for (let i = 0; i < files.length; i++) {
-    selectedFiles.value.push(files[i]);
-    const src = URL.createObjectURL(files[i]);
-    imageSrc.value.push(src);
+const onImageSelect = (event) => {
+  const file = event.files[0]
+  selectedImage.value = file
+  imageName.value = file.name
+}
+
+const onFileSelect = (event) => {
+  const file = event.files[0]
+  selectedFile.value = file
+  fileName.value = file.name
+}
+
+const submitForm = async () => {
+  const formData = new FormData()
+  
+  // append form fields
+  for (const key in form.value) {
+    formData.append(key, form.value[key])
   }
-};
 
-const removeItem = index => {
-  imageSrc.value.splice(index, 1);
-  selectedFiles.value.splice(index, 1);
-};
+  // append files
+  if (selectedImage.value) {
+    formData.append('image', selectedImage.value)
+  }
 
-const submitForm = () => {
-  console.log('Form Data:', form.value);
-  console.log('Uploaded Files:', selectedFiles.value);
-  alert('Form submitted successf  ully!');
-};
+  if (selectedFile.value) {
+    formData.append('file', selectedFile.value)
+  }
+
+  try {
+    const response = await axios.post('/api/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+
+    console.log('Upload successful:', response.data)
+    alert('Form submitted successfully!')
+  } catch (error) {
+    console.error('Upload failed:', error)
+    alert('Failed to submit the form.')
+  }
+}
 </script>
 
 <style>
@@ -151,14 +170,6 @@ form {
   margin-right: 1rem;
 }
 
-input {
-  padding: 0.5rem;
-  margin-top: 0.3rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-}
-
 .button1 {
   margin-top: 1.5rem;
   padding: 0.7rem;
@@ -189,6 +200,7 @@ input {
   padding: 4px;
   border: 0.5px solid #a0a0a0;
   border-radius: 10px;
+  position: relative;
 }
 
 .image-style {
@@ -202,5 +214,8 @@ input {
   top: 0;
   right: 0;
   cursor: pointer;
+  background-color: white;
+  padding: 2px 5px;
+  border-radius: 50%;
 }
 </style>
