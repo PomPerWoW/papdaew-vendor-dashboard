@@ -27,23 +27,23 @@
         </div>
 
         <form @submit.prevent="submitForm" class="login-form">
-          <div class="form-group" :class="{ error: submitted && !form.email }">
-            <label for="email">Email Address</label>
+          <div
+            class="form-group"
+            :class="{ error: submitted && !form.identifier }"
+          >
+            <label for="identifier">Email or Username</label>
             <div class="input-container">
-              <Icon icon="material-symbols:mail-outline" class="input-icon" />
+              <Icon icon="material-symbols:person-outline" class="input-icon" />
               <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                placeholder="Enter your email"
-                autocomplete="email"
+                id="identifier"
+                v-model="form.identifier"
+                type="text"
+                placeholder="Enter your email or username"
+                autocomplete="username"
               />
             </div>
-            <small v-if="submitted && !form.email" class="error-text">
-              Email is required
-            </small>
-            <small v-else-if="submitted && !isValidEmail" class="error-text">
-              Please enter a valid email address
+            <small v-if="submitted && !form.identifier" class="error-text">
+              Email or username is required
             </small>
           </div>
 
@@ -101,7 +101,7 @@
         </form>
 
         <div class="form-footer">
-          <p>© 2025 Papdaew. All rights reserved.</p>
+          &copy; {{ new Date().getFullYear() }} Papdaew. All rights reserved.
         </div>
       </div>
     </div>
@@ -124,7 +124,7 @@ const router = useRouter();
 const $toast = useToast();
 
 const form = ref({
-  email: '',
+  identifier: '',
   password: '',
 });
 
@@ -134,10 +134,16 @@ const loading = ref(false);
 const showPassword = ref(false);
 const errorMessage = ref('');
 
-// Check email validity
-const isValidEmail = computed(() => {
+// Check if identifier is valid (either valid email or username with min length 3)
+const isValidIdentifier = computed(() => {
+  // Check if it's an email
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(form.value.email);
+  const isEmail = emailRegex.test(form.value.identifier);
+
+  // If it's not an email, check if it's a valid username (at least 3 chars)
+  const isUsername = form.value.identifier.length >= 3;
+
+  return isEmail || isUsername;
 });
 
 const submitForm = async () => {
@@ -145,7 +151,15 @@ const submitForm = async () => {
   errorMessage.value = '';
 
   // Validate form
-  if (!form.value.email || !form.value.password || !isValidEmail.value) {
+  if (
+    !form.value.identifier ||
+    !form.value.password ||
+    !isValidIdentifier.value
+  ) {
+    if (!isValidIdentifier.value && form.value.identifier) {
+      errorMessage.value =
+        'Please enter a valid email address or username (at least 3 characters)';
+    }
     return;
   }
 
@@ -178,7 +192,7 @@ const submitForm = async () => {
     console.error('Login error:', error);
 
     // Show error message
-    errorMessage.value = 'Invalid email or password. Please try again.';
+    errorMessage.value = 'Invalid credentials. Please try again.';
 
     $toast.error('Login failed. Please check your credentials.', {
       position: 'top-right',
@@ -449,13 +463,26 @@ input[type='text']:focus {
 }
 
 .form-footer {
-  margin-top: 32px;
   text-align: center;
+  padding: 20px;
+  font-size: 0.9rem;
+  color: #999;
 }
 
-.form-footer p {
+.registration-link {
+  margin-top: 10px;
+  font-size: 0.95rem;
   color: #666;
-  margin: 0 0 8px 0;
+}
+
+.registration-link a {
+  color: #6b9080;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.registration-link a:hover {
+  text-decoration: underline;
 }
 
 /* Responsive Design */

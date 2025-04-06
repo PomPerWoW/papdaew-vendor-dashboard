@@ -9,6 +9,8 @@ import HelpVendor from '@/views/HelpVendor.vue';
 import SettingVendor from '@/views/SettingVendor.vue';
 import SupportVendor from '@/views/SupportVendor.vue';
 import Login from '@/views/Login.vue';
+import UnauthorizedAccess from '@/views/UnauthorizedAccess.vue';
+import Signup from '@/views/Signup.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +28,14 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterVendor,
+      meta: {
+        hideSidebar: true,
+      },
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: Signup,
       meta: {
         hideSidebar: true,
       },
@@ -70,6 +80,14 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: Login,
+      meta: {
+        hideSidebar: true,
+      },
+    },
+    {
+      path: '/forbidden',
+      name: 'forbidden',
+      component: UnauthorizedAccess,
       meta: {
         hideSidebar: true,
       },

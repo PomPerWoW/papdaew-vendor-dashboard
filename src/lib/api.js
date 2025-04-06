@@ -11,6 +11,14 @@ const api = axios.create({
 });
 
 // Create specific API instance for vendor service
+const authApi = axios.create({
+  baseURL: 'http://localhost:3001/api/v1/auth',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 15000,
+});
+
 const vendorApi = axios.create({
   baseURL: 'http://localhost:3004/api/v1/vendors',
   headers: {
@@ -50,28 +58,29 @@ api.interceptors.response.use(
   }
 );
 
-// Vendor registration API
-export const registerVendor = async (vendorData, token) => {
+// Auth service API calls
+export const signup = async userData => {
   try {
-    // If token is provided, use the invitation registration endpoint
-    if (token) {
-      const response = await adminApi.post(
-        `/vendor-invitations/token/${token}/register`,
-        vendorData
-      );
-      return response.data;
-    } else {
-      // Direct vendor registration (if allowed)
-      const response = await vendorApi.post('', vendorData);
-      return response.data;
-    }
+    const response = await authApi.post('/signup', userData);
+    return response.data;
+  } catch (error) {
+    console.error('Error signing up:', error);
+    throw error;
+  }
+};
+
+// Vendor service API calls
+export const registerVendor = async vendorData => {
+  try {
+    const response = await vendorApi.post('', vendorData);
+    return response.data;
   } catch (error) {
     console.error('Error registering vendor:', error);
     throw error;
   }
 };
 
-// Validate invitation token
+// Admin service API calls
 export const validateInvitationToken = async token => {
   try {
     const response = await adminApi.get(
@@ -84,31 +93,14 @@ export const validateInvitationToken = async token => {
   }
 };
 
-// Upload vendor images
-export const uploadVendorImages = async (
-  vendorId,
-  formData,
-  imageType = 'gallery'
-) => {
+export const acceptInvitation = async token => {
   try {
-    // Determine the endpoint based on the image type
-    let endpoint = `/${vendorId}/images`;
-
-    // Different endpoints for different image types
-    if (imageType === 'logo') {
-      endpoint = `/${vendorId}/logo`;
-    } else if (imageType === 'banner') {
-      endpoint = `/${vendorId}/banner`;
-    }
-
-    const response = await vendorApi.post(endpoint, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await adminApi.post(
+      `/vendor-invitations/token/${token}/accept`
+    );
     return response.data;
   } catch (error) {
-    console.error(`Error uploading vendor ${imageType}:`, error);
+    console.error('Error accepting invitation:', error);
     throw error;
   }
 };
@@ -134,22 +126,11 @@ export const getLocationById = async locationId => {
   }
 };
 
-// Delete vendor (for test data cleanup)
-export const deleteVendor = async vendorId => {
-  try {
-    const response = await vendorApi.delete(`/${vendorId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting vendor:', error);
-    throw error;
-  }
-};
-
 export default {
+  signup,
   registerVendor,
   validateInvitationToken,
-  uploadVendorImages,
+  acceptInvitation,
   createLocation,
   getLocationById,
-  deleteVendor,
 };

@@ -71,32 +71,6 @@
           <button type="button" class="debug-button" @click="prefillTestData">
             Prefill Test Data (Development Only)
           </button>
-          <button
-            type="button"
-            class="debug-button debug-button-delete"
-            @click="showDeleteConfirm = true"
-          >
-            Delete Test Data
-          </button>
-
-          <div class="delete-confirm" v-if="showDeleteConfirm">
-            <div class="delete-confirm-content">
-              <h4>Confirm Delete</h4>
-              <p>This will delete the test vendor. Are you sure?</p>
-              <div class="delete-confirm-actions">
-                <button type="button" @click="showDeleteConfirm = false">
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  class="delete-btn"
-                  @click="deleteTestData"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
         <form @submit.prevent="submitForm">
@@ -262,48 +236,6 @@
                   class="error-text"
                 >
                   {{ v$.postalCode.$errors[0].$message }}
-                </small>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group full-width">
-                <label for="manager">Manager :</label>
-                <input
-                  type="text"
-                  id="manager"
-                  v-model="form.manager"
-                  placeholder="Enter manager name"
-                  class="form-input"
-                  :class="{ 'input-error': v$.manager.$invalid && submitted }"
-                />
-                <small
-                  v-if="v$.manager.$invalid && submitted"
-                  class="error-text"
-                >
-                  {{ v$.manager.$errors[0].$message }}
-                </small>
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group full-width">
-                <label for="manager_phone">Manager Contact :</label>
-                <input
-                  type="text"
-                  id="manager_phone"
-                  v-model="form.manager_phone"
-                  placeholder="Enter manager phone number"
-                  class="form-input"
-                  :class="{
-                    'input-error': v$.manager_phone.$invalid && submitted,
-                  }"
-                />
-                <small
-                  v-if="v$.manager_phone.$invalid && submitted"
-                  class="error-text"
-                >
-                  {{ v$.manager_phone.$errors[0].$message }}
                 </small>
               </div>
             </div>
@@ -669,9 +601,8 @@ import {
 import {
   registerVendor,
   validateInvitationToken,
-  uploadVendorImages,
+  acceptInvitation,
   createLocation,
-  deleteVendor,
 } from '../lib/api';
 import { handleFileSelection } from '../lib/fileUpload';
 
@@ -689,12 +620,6 @@ const totalSteps = 3;
 // Fix the isDevelopment variable
 const isDevelopment = ref(true); // Force to true for development testing
 
-// Add these variables to the script
-const showDeleteConfirm = ref(false);
-
-// Add testVendorId reference
-const testVendorId = ref(null);
-
 // Form data - expanded to include all needed fields from the JSON
 const form = ref({
   // Step 1 - Basic Information
@@ -707,8 +632,6 @@ const form = ref({
   subdistrict: '',
   province: '',
   postalCode: '',
-  manager: '',
-  manager_phone: '',
 
   // Step 2 - Business Details
   businessDescription: '',
@@ -805,18 +728,6 @@ const step1Rules = computed(() => {
       validPostalCode: helpers.withMessage(
         'Please enter a valid postal code (5 digits)',
         helpers.regex(/^\d{5}$/)
-      ),
-    },
-    manager: {
-      required: helpers.withMessage('Manager name is required', required),
-    },
-    manager_phone: {
-      required: helpers.withMessage('Manager phone is required', required),
-      validPhone: helpers.withMessage(
-        'Please enter a valid phone number',
-        helpers.regex(
-          /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,9}$/
-        )
       ),
     },
   };
@@ -984,37 +895,48 @@ watch(currentStep, () => {
 
 // Check if we have an invitation token in the URL
 onMounted(async () => {
-  // Get token from query parameter if it exists
-  const urlToken = route.query.token;
+  try {
+    loading.value = true;
 
-  if (urlToken) {
-    token.value = urlToken;
-    try {
-      loading.value = true;
-      // Validate the token and pre-fill the form with invitation data
-      const response = await validateInvitationToken(urlToken);
-      if (response.success && response.data) {
-        const invitationData = response.data;
-        // Pre-fill form with data from invitation
-        form.value.email = invitationData.email || '';
-        form.value.name = invitationData.businessName || '';
-        // Generate username from email (remove domain part)
-        form.value.username = form.value.email.split('@')[0] || '';
-        // Pre-fill other fields if available
-        form.value.phone = invitationData.contactPhone || '';
-        form.value.address = invitationData.businessAddress || '';
-      }
-    } catch (error) {
-      console.error('Error validating token:', error);
-      errorMessage.value =
-        'Invalid or expired invitation token. Please contact support.';
-      toast.error(errorMessage.value, {
+    // Get token from query parameter if it exists
+    const urlToken = route.query.token;
+    token.value = urlToken || null;
+
+    // Always validate the token
+    const response = await validateInvitationToken(urlToken);
+    console.log('response', response);
+
+    if (response.success && response.data.valid) {
+      const invitationData = response.data;
+      // Pre-fill form with data from invitation
+      form.value.email = invitationData.invitation.email || '';
+      form.value.name = invitationData.invitation.businessName || '';
+      // Generate username from email (remove domain part)
+      form.value.username = form.value.email.split('@')[0] || '';
+      // Pre-fill other fields if available
+      form.value.phone = invitationData.invitation.contactPhone || '';
+    } else {
+      // Token validation failed, redirect to unauthorized page
+      console.error('Invalid token detected');
+      toast.error('Invalid or expired invitation token', {
         position: 'top-right',
-        duration: 5000,
+        duration: 3000,
       });
-    } finally {
-      loading.value = false;
+      router.push('/forbidden');
     }
+  } catch (error) {
+    console.error('Error validating token:', error);
+    errorMessage.value =
+      'Invalid or expired invitation token. Please contact support.';
+    toast.error(errorMessage.value, {
+      position: 'top-right',
+      duration: 5000,
+    });
+
+    // Redirect to unauthorized page on error
+    router.push('/forbidden');
+  } finally {
+    loading.value = false;
   }
 });
 
@@ -1045,6 +967,9 @@ const submitForm = async () => {
     if (!form.value.username) {
       form.value.username = form.value.email.split('@')[0];
     }
+
+    // Accept the invitation
+    await acceptInvitation(token.value);
 
     // Prepare location data
     const locationData = {
@@ -1079,47 +1004,13 @@ const submitForm = async () => {
         line: form.value.socialMedia.line || null,
       },
       businessHours: form.value.businessHours,
-      // Additional fields not directly in the JSON structure
-      username: form.value.username,
-      manager: form.value.manager,
-      manager_phone: form.value.manager_phone,
-      locationId: locationId, // Reference to the created location
+      headquartersLocationId: locationId,
       status: 'active',
     };
 
     // Register the vendor
-    const response = await registerVendor(vendorData, token.value);
-
-    // If we have a vendorId, upload logo, banner and other images
-    if (response.data && response.data.vendor && response.data.vendor.id) {
-      const vendorId = response.data.vendor.id;
-
-      // Upload logo if available
-      if (logoFile.value) {
-        const logoFormData = new FormData();
-        logoFormData.append('logo', logoFile.value);
-        await uploadVendorImages(vendorId, logoFormData, 'logo');
-      }
-
-      // Upload banner if available
-      if (bannerFile.value) {
-        const bannerFormData = new FormData();
-        bannerFormData.append('banner', bannerFile.value);
-        await uploadVendorImages(vendorId, bannerFormData, 'banner');
-      }
-
-      // Upload additional images
-      if (selectedFiles.value.length > 0) {
-        const formData = new FormData();
-
-        // Append all files to the FormData
-        selectedFiles.value.forEach(file => {
-          formData.append('images', file);
-        });
-
-        await uploadVendorImages(vendorId, formData, 'gallery');
-      }
-    }
+    const vendorResponse = await registerVendor(vendorData);
+    const vendorId = vendorResponse.data.id;
 
     // Show success message
     toast.success('Your vendor account has been created successfully!', {
@@ -1127,9 +1018,11 @@ const submitForm = async () => {
       duration: 5000,
     });
 
-    // Redirect to login page or dashboard
+    // Redirect to signup page with vendor ID
     setTimeout(() => {
-      router.push('/');
+      router.push(
+        `/signup?vendorId=${vendorId}&businessName=${encodeURIComponent(form.value.name)}&email=${encodeURIComponent(form.value.email)}`
+      );
     }, 2000);
   } catch (error) {
     console.error('Registration error:', error);
@@ -1164,8 +1057,6 @@ const prefillTestData = () => {
     subdistrict: 'Pathum Wan',
     province: 'Bangkok',
     postalCode: '10330',
-    manager: 'John Smith',
-    manager_phone: '+6699887766',
 
     // Step 2 - Business Details
     businessDescription:
@@ -1195,88 +1086,7 @@ const prefillTestData = () => {
     status: 'active',
   };
 
-  // Set fake logo and banner previews
-  logoPreview.value = 'https://storage.papdaew.com/vendors/kfc-logo.png';
-  bannerPreview.value = 'https://storage.papdaew.com/vendors/kfc-banner.jpg';
-
-  // For testing, set a hardcoded test vendor ID
-  testVendorId.value = '64f8a1b2c3d4e5f6a7b8c9d0'; // This would normally come from the API response
-
   toast.success('Test data loaded!', { position: 'top-right', duration: 3000 });
-};
-
-// Update deleteTestData to use the API
-const deleteTestData = async () => {
-  try {
-    if (!testVendorId.value) {
-      toast.error('No test vendor ID available', {
-        position: 'top-right',
-        duration: 3000,
-      });
-      showDeleteConfirm.value = false;
-      return;
-    }
-
-    loading.value = true;
-
-    // Call the API to delete the vendor
-    await deleteVendor(testVendorId.value);
-
-    // Reset the form data
-    form.value = {
-      name: '',
-      email: '',
-      phone: '',
-      addressLine1: '',
-      addressLine2: '',
-      district: '',
-      subdistrict: '',
-      province: '',
-      postalCode: '',
-      manager: '',
-      manager_phone: '',
-      businessDescription: '',
-      businessType: 'RESTAURANT',
-      website: '',
-      socialMedia: {
-        facebook: '',
-        instagram: '',
-        twitter: '',
-        line: '',
-      },
-      businessHours: [
-        { day: 0, open: '09:00', close: '18:00', isClosed: false },
-        { day: 1, open: '09:00', close: '18:00', isClosed: false },
-        { day: 2, open: '09:00', close: '18:00', isClosed: false },
-        { day: 3, open: '09:00', close: '18:00', isClosed: false },
-        { day: 4, open: '09:00', close: '18:00', isClosed: false },
-        { day: 5, open: '09:00', close: '18:00', isClosed: false },
-        { day: 6, open: '09:00', close: '18:00', isClosed: false },
-      ],
-      username: '',
-      images: [],
-      status: 'active',
-    };
-
-    // Reset previews
-    logoPreview.value = '';
-    bannerPreview.value = '';
-    testVendorId.value = null;
-
-    showDeleteConfirm.value = false;
-    toast.success('Test vendor deleted successfully!', {
-      position: 'top-right',
-      duration: 3000,
-    });
-  } catch (err) {
-    console.error('Error deleting test data:', err);
-    toast.error('Failed to delete test data', {
-      position: 'top-right',
-      duration: 3000,
-    });
-  } finally {
-    loading.value = false;
-  }
 };
 </script>
 
@@ -1759,65 +1569,5 @@ select.form-input {
 
 .debug-button:hover {
   background-color: #5a7b6c;
-}
-
-.debug-button-delete {
-  background-color: #e74c3c;
-}
-
-.debug-button-delete:hover {
-  background-color: #c0392b;
-}
-
-.delete-confirm {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.delete-confirm-content {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  width: 400px;
-  max-width: 90%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.delete-confirm-content h4 {
-  margin-top: 0;
-  color: #333;
-}
-
-.delete-confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.delete-confirm-actions button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.delete-confirm-actions button:first-child {
-  background-color: #f1f1f1;
-  color: #333;
-}
-
-.delete-btn {
-  background-color: #e74c3c;
-  color: white;
 }
 </style>
