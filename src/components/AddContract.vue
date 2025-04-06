@@ -17,7 +17,11 @@
         <div class="insideform">
           <div style="margin-right: 1.2rem; width: 205px">
             <label>Telephone Number:</label>
-            <InputText v-model="formData.telephone" type="text" variant="filled" />
+            <InputText
+              v-model="formData.telephone"
+              type="text"
+              variant="filled"
+            />
           </div>
           <div style="width: 205px">
             <label>Line:</label>
@@ -30,21 +34,32 @@
         </div>
         <div>
           <label>Upload Image:</label>
-        <div style="display: flex; justify-content: flex-start; margin: 1rem 0 1rem 0; align-items: center;">
-          <FileUpload 
-            mode="basic" 
-            accept="image/*" 
-            @select="onImageSelect" 
-            customUpload 
-            auto 
-            class="p-button-outlined" 
-            style="font-size: small;"
-          />
-          <span v-if="imageName" style="margin-left: 1rem;">Selected: {{ imageName }}</span>
-        </div>
+          <div
+            style="
+              display: flex;
+              justify-content: flex-start;
+              margin: 1rem 0 1rem 0;
+              align-items: center;
+            "
+          >
+            <FileUpload
+              mode="basic"
+              accept="image/*"
+              @select="onImageSelect"
+              customUpload
+              auto
+              class="p-button-outlined"
+              style="font-size: small"
+            />
+            <span v-if="imageName" style="margin-left: 1rem"
+              >Selected: {{ imageName }}</span
+            >
+          </div>
         </div>
         <div class="button-container">
-          <button type="button" @click="emit('close')" class="form-btn">Cancel</button>
+          <button type="button" @click="emit('close')" class="form-btn">
+            Cancel
+          </button>
           <button type="submit" class="form-btn">Submit</button>
         </div>
       </form>
@@ -53,11 +68,12 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import FileUpload from 'primevue/fileupload';
-const props = defineProps({ isOpen: Boolean });
+
+defineProps({ isOpen: Boolean });
 const emit = defineEmits(['close']);
 
 const formData = ref({
@@ -67,25 +83,20 @@ const formData = ref({
   telephone: '',
   address: '',
 });
-const selectedImage = ref(null)
-const imageName = ref(null)
+const selectedImage = ref(null);
+const imageName = ref(null);
 
-const onImageSelect = (event) => {
-  const file = event.files[0]
-  selectedImage.value = file
-  imageName.value = file.name
-}
-
-const onFileSelect = (event) => {
-  const file = event.files[0]
-  selectedFile.value = file
-  fileName.value = file.name
-}
+const onImageSelect = event => {
+  const file = event.files[0];
+  selectedImage.value = file;
+  imageName.value = file.name;
+};
 
 const submitForm = () => {
   console.log('Submitted Data:', formData.value);
   if (selectedImage.value) {
-    formData.append('image', selectedImage.value)
+    const formDataObj = new FormData();
+    formDataObj.append('image', selectedImage.value);
   }
   emit('close');
 };
@@ -124,7 +135,7 @@ textarea {
   margin: 5px 0 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  background-color: #EEEEEE;
+  background-color: #eeeeee;
 }
 
 .insideform {
@@ -151,7 +162,7 @@ textarea {
 }
 
 .form-btn:last-child {
-  background: #6B9080;
+  background: #6b9080;
   color: white;
 }
 </style>

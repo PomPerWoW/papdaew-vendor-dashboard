@@ -18,7 +18,7 @@
       </div>
       <div class="rightbox">
         <div class="linegraph">
-            <h3>Line Graph</h3>
+          <h3>Line Graph</h3>
           <Chart
             type="line"
             :data="chartData"
@@ -194,33 +194,31 @@ const setChartOptions = () => {
 const editingRows = ref([]);
 // Mock data
 const products = ref([
-    {
-        id: '1000',
-        code: 'f230fh0g3',
-        name: 'Selena',
-        branch: 'Central World'
-    },
-    {
-        id: '1001',
-        code: 'nvklal433',
-        name: 'Kevin',
-        branch: 'Robinson Ladkrabang',
-        rating: 4
-    },
-    {
-        id: '1002',
-        code: 'zz21cz3c1',
-        name: 'Blue Band',
-        branch: 'Central World',
-        rating: 3
-    }
+  {
+    id: '1000',
+    code: 'f230fh0g3',
+    name: 'Selena',
+    branch: 'Central World',
+  },
+  {
+    id: '1001',
+    code: 'nvklal433',
+    name: 'Kevin',
+    branch: 'Robinson Ladkrabang',
+    rating: 4,
+  },
+  {
+    id: '1002',
+    code: 'zz21cz3c1',
+    name: 'Blue Band',
+    branch: 'Central World',
+    rating: 3,
+  },
 ]);
-const onRowEditSave = (event) => {
-    let { newData, index } = event;
-    products.value[index] = newData;
+const onRowEditSave = event => {
+  let { newData, index } = event;
+  products.value[index] = newData;
 };
-
-
 </script>
 <style lang="css">
 .main {
@@ -260,8 +258,8 @@ h3 {
   grid-column: span 2;
 }
 .table {
-    padding: 1.25rem;
-    border-radius: 20px;
-    margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
 }
 </style>

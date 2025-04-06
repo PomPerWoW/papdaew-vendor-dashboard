@@ -36,22 +36,16 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue';
+import { ref } from 'vue';
 import InputText from 'primevue/inputtext';
 import MultiSelect from 'primevue/multiselect';
 
-const props = defineProps({ isOpen: Boolean });
+defineProps({ isOpen: Boolean });
 const emit = defineEmits(['close']);
 
 const formData = ref({
-  managerName: '',
-
+  name: '',
 });
-
-const uploadedFile = ref(null);
-const handleFileUpload = event => {
-  uploadedFile.value = event.target.files[0];
-};
 
 const submitForm = () => {
   console.log('Submitted Data:', formData.value);
