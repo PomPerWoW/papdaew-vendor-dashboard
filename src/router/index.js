@@ -25,8 +25,7 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterVendor,
-      meta: { hideSidebarVendor: true },
-      meta: { hideSidebarAdmin: true },
+      meta: { hideSidebarVendor: true, hideSidebarAdmin: true },
     }, //vendor
     {
       path: '/queue-vendor',
@@ -35,8 +34,8 @@ const router = createRouter({
       meta: { role: 'vendor' },
     },
     {
-      path: '/contract-vendor',
-      name: 'contract',
+      path: '/contact',
+      name: 'contact',
       component: ContractVendor,
       meta: { role: 'vendor' },
     },
