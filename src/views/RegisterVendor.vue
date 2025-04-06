@@ -1,5 +1,6 @@
 <template>
   <div class="container1">
+<<<<<<< HEAD
     <div class="registration-card">
       <div class="illustration-container">
         <button
@@ -498,11 +499,81 @@
           </div>
         </form>
       </div>
+=======
+    <div class="illustration">
+      <!-- <img src="/path-to-your-illustration.png" alt="Illustration" /> -->
+    </div>
+    <div class="form-container">
+      <h2>Vendor Registration</h2>
+      <form @submit.prevent="submitForm">
+        <div class="insideform">
+          <div class="leftbox">
+            <label for="name">Name :</label>
+            <InputText v-model="form.name" type="text" variant="filled" />
+
+            <label for="email">Email :</label>
+            <InputText v-model="form.email" type="text" variant="filled" />
+
+            <label for="password">Password :</label>
+            <InputText v-model="form.password" type="password" variant="filled" />
+
+            <label for="copy_number">Copy of Number :</label>
+            <InputText v-model="form.copy_number" type="text" variant="filled" />
+          </div>
+          <div>
+            <label for="branch">Branch :</label>
+            <InputText v-model="form.branch" type="text" variant="filled" />
+
+            <label for="phone">Phone :</label>
+            <InputText v-model="form.phone" type="text" variant="filled" />
+
+            <label for="Manager">Manager :</label>
+            <InputText v-model="form.Manager" type="text" variant="filled" />
+
+            <label for="ManagerPhone">Manager Phone :</label>
+            <InputText v-model="form.ManagerPhone" type="text" variant="filled" />
+          </div>
+        </div>
+
+        <label for="address">Address :</label>
+        <Textarea v-model="form.address" autoResize rows="5" cols="30" />
+
+        <label>Upload Image:</label>
+        <div style="display: flex; justify-content: flex-start; margin: 1rem 0 1rem 0; align-items: center;">
+          <FileUpload
+            mode="basic"
+            accept="image/*"
+            @select="onImageSelect"
+            customUpload
+            auto
+            class="p-button-outlined"
+            style="font-size: small;"
+          />
+          <span v-if="imageName" style="margin-left: 1rem;">Selected: {{ imageName }}</span>
+        </div>
+
+        <label class="mt-4">Upload File:</label>
+        <div style="display: flex; justify-content: flex-start; margin: 1rem 0 0 0; align-items: center;">
+          <FileUpload
+            mode="basic"
+            accept=".pdf,.doc,.docx,.xls,.xlsx"
+            @select="onFileSelect"
+            customUpload
+            auto
+            class="p-button-outlined"
+            style="font-size: small;"
+          />
+          <span v-if="fileName" style="margin-left: 1rem;">Selected: {{ fileName }}</span>
+        </div>
+        <button type="submit" class="button1">Register</button>
+      </form>
+>>>>>>> refs/remotes/origin/develop
     </div>
   </div>
 </template>
 
 <script setup>
+<<<<<<< HEAD
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vue-toast-notification';
@@ -533,12 +604,20 @@ const currentStep = ref(1);
 const totalSteps = 3;
 
 // Form data - expanded to include all needed fields from the JSON
+=======
+import { ref } from 'vue';
+import FileUpload from 'primevue/fileupload';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+
+>>>>>>> refs/remotes/origin/develop
 const form = ref({
   // Step 1 - Basic Information
   name: '',
   email: '',
   phone: '',
   address: '',
+<<<<<<< HEAD
   manager: '',
   manager_phone: '',
 
@@ -780,18 +859,40 @@ const handleBannerUpload = e => {
 const handleFileUpload = e => {
   const files = e.target.files || e.dataTransfer.files;
   if (!files.length) return;
+=======
+});
 
-  for (let i = 0; i < files.length; i++) {
-    selectedFiles.value.push(files[i]);
-    const src = URL.createObjectURL(files[i]);
-    imageSrc.value.push(src);
+
+const selectedImage = ref(null)
+const imageName = ref(null)
+const selectedFile = ref(null)
+const fileName = ref(null)
+>>>>>>> refs/remotes/origin/develop
+
+const onImageSelect = (event) => {
+  const file = event.files[0]
+  selectedImage.value = file
+  imageName.value = file.name
+}
+
+const onFileSelect = (event) => {
+  const file = event.files[0]
+  selectedFile.value = file
+  fileName.value = file.name
+}
+
+const submitForm = async () => {
+  const formData = new FormData()
+
+  // append form fields
+  for (const key in form.value) {
+    formData.append(key, form.value[key])
   }
-};
 
-const removeItem = index => {
-  imageSrc.value.splice(index, 1);
-  selectedFiles.value.splice(index, 1);
-};
+  // append files
+  if (selectedImage.value) {
+    formData.append('image', selectedImage.value)
+  }
 
 // Reset the form errors on step change
 watch(currentStep, () => {
@@ -1095,6 +1196,7 @@ h2 {
   flex-direction: column;
 }
 
+<<<<<<< HEAD
 .form-group.full-width {
   width: 100%;
 }
@@ -1174,6 +1276,20 @@ select.form-input {
 }
 
 .enroll-button {
+=======
+.insideform {
+  display: flex;
+  flex-direction: row;
+}
+
+.leftbox {
+  margin-right: 1rem;
+}
+
+.button1 {
+  margin-top: 1.5rem;
+  padding: 0.7rem;
+>>>>>>> refs/remotes/origin/develop
   background-color: #6b9080;
   color: white;
   border: none;
@@ -1217,9 +1333,15 @@ select.form-input {
   width: 100px;
   height: 100px;
   padding: 4px;
+<<<<<<< HEAD
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   overflow: hidden;
+=======
+  border: 0.5px solid #a0a0a0;
+  border-radius: 10px;
+  position: relative;
+>>>>>>> refs/remotes/origin/develop
 }
 
 .image-style {
@@ -1233,6 +1355,7 @@ select.form-input {
   top: -8px;
   right: -8px;
   cursor: pointer;
+<<<<<<< HEAD
   z-index: 1;
 }
 
@@ -1402,5 +1525,10 @@ select.form-input {
     width: 100%;
     margin-bottom: 4px;
   }
+=======
+  background-color: white;
+  padding: 2px 5px;
+  border-radius: 50%;
+>>>>>>> refs/remotes/origin/develop
 }
 </style>

@@ -29,8 +29,19 @@
           <Textarea v-model="formData.address" autoResize rows="5" cols="30" />
         </div>
         <div>
-          <label>Upload your QR:</label>
-          <input type="file" @change="handleFileUpload" />
+          <label>Upload Image:</label>
+        <div style="display: flex; justify-content: flex-start; margin: 1rem 0 1rem 0; align-items: center;">
+          <FileUpload 
+            mode="basic" 
+            accept="image/*" 
+            @select="onImageSelect" 
+            customUpload 
+            auto 
+            class="p-button-outlined" 
+            style="font-size: small;"
+          />
+          <span v-if="imageName" style="margin-left: 1rem;">Selected: {{ imageName }}</span>
+        </div>
         </div>
         <div class="button-container">
           <button type="button" @click="emit('close')" class="form-btn">Cancel</button>
@@ -45,7 +56,7 @@
 import { ref, defineProps, defineEmits } from 'vue';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
-
+import FileUpload from 'primevue/fileupload';
 const props = defineProps({ isOpen: Boolean });
 const emit = defineEmits(['close']);
 
@@ -56,14 +67,26 @@ const formData = ref({
   telephone: '',
   address: '',
 });
+const selectedImage = ref(null)
+const imageName = ref(null)
 
-const uploadedFile = ref(null);
-const handleFileUpload = event => {
-  uploadedFile.value = event.target.files[0];
-};
+const onImageSelect = (event) => {
+  const file = event.files[0]
+  selectedImage.value = file
+  imageName.value = file.name
+}
+
+const onFileSelect = (event) => {
+  const file = event.files[0]
+  selectedFile.value = file
+  fileName.value = file.name
+}
 
 const submitForm = () => {
   console.log('Submitted Data:', formData.value);
+  if (selectedImage.value) {
+    formData.append('image', selectedImage.value)
+  }
   emit('close');
 };
 </script>
