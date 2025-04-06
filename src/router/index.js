@@ -2,23 +2,23 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '../stores/counter.js';
 import HomeView from '../views/HomeView.vue';
 import RegisterVendor from '../views/RegisterVendor.vue';
-import QueueVendor from '../views/QueueVendor.vue';
-import ContractVendor from '../views/ContractVendor.vue';
+import BranchVendor from '../views/BranchVendor.vue';
 import CustomerVendor from '../views/CustomerVendor.vue';
-import DashboardVendor from '@/views/DashboardVendor.vue';
+import VendorDashboard from '../views/VendorDashboard.vue';
 import HelpVendor from '@/views/HelpVendor.vue';
-import DashBoardAdmin from '@/views/DashBoardAdmin.vue';
-import CustomerAdmin from '@/views/CustomerAdmin.vue';
-import VendorlistAdmin from '@/views/VendorlistAdmin.vue';
-import RoleAdmin from '@/views/RoleAdmin.vue';
 import SettingVendor from '@/views/SettingVendor.vue';
-import SettingAdmin from '@/views/SettingAdmin.vue';
+import SupportVendor from '@/views/SupportVendor.vue';
 import Login from '@/views/Login.vue';
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
+      redirect: '/dashboard-vendor',
+    },
+    {
+      path: '/home',
       name: 'home',
       component: HomeView,
     },
@@ -27,20 +27,13 @@ const router = createRouter({
       name: 'register',
       component: RegisterVendor,
       meta: {
-        hideSidebarVendor: true,
-        hideSidebarAdmin: true,
+        hideSidebar: true,
       },
-    }, //vendor
-    {
-      path: '/queue-vendor',
-      name: 'queue-vendor',
-      component: QueueVendor,
-      meta: { role: 'vendor' },
     },
     {
-      path: '/contact',
-      name: 'contact',
-      component: ContractVendor,
+      path: '/branch',
+      name: 'branch',
+      component: BranchVendor,
       meta: { role: 'vendor' },
     },
     {
@@ -52,7 +45,7 @@ const router = createRouter({
     {
       path: '/dashboard-vendor',
       name: 'dashboard',
-      component: DashboardVendor,
+      component: VendorDashboard,
       meta: { role: 'vendor' },
     },
     {
@@ -62,28 +55,10 @@ const router = createRouter({
       meta: { role: 'vendor' },
     },
     {
-      path: '/dashboard-admin',
-      name: 'dashboard-admin',
-      component: DashBoardAdmin,
-      meta: { role: 'admin' },
-    },
-    {
-      path: '/customer-admin',
-      name: 'customer-admin',
-      component: CustomerAdmin,
-      meta: { role: 'admin' },
-    },
-    {
-      path: '/vendorlist-admin',
-      name: 'vendorlist-admin',
-      component: VendorlistAdmin,
-      meta: { role: 'admin' },
-    },
-    {
-      path: '/role-admin',
-      name: 'role-admin',
-      component: RoleAdmin,
-      meta: { role: 'admin' },
+      path: '/support',
+      name: 'support',
+      component: SupportVendor,
+      meta: { role: 'vendor' },
     },
     {
       path: '/setting-vendor',
@@ -92,18 +67,11 @@ const router = createRouter({
       meta: { role: 'vendor' },
     },
     {
-      path: '/setting-admin',
-      name: 'setting-admin',
-      component: SettingAdmin,
-      meta: { role: 'admin' },
-    },
-    {
       path: '/login',
       name: 'login',
       component: Login,
       meta: {
-        hideSidebarVendor: true,
-        hideSidebarAdmin: true,
+        hideSidebar: true,
       },
     },
   ],
@@ -111,13 +79,14 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore();
-  const userRole = userStore.role; // 'vendor' or 'admin'
+  const userRole = userStore.role;
 
-  // If route requires a specific role
+  // If route requires a specific role and the user doesn't have it
   if (to.meta.role && to.meta.role !== userRole) {
-    next('/'); // Redirect to home if the role doesn't match
+    next('/'); // Redirect to home
   } else {
     next(); // Allow access
   }
 });
+
 export default router;

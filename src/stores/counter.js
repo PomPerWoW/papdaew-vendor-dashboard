@@ -1,10 +1,14 @@
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
 
 export const useUserStore = defineStore('user', () => {
-  const role = ref('admin'); // Mock role: 'vendor' or 'admin'
+  const role = ref('vendor'); // Default role is vendor
 
   function setRole(newRole) {
+    if (newRole !== 'vendor') {
+      console.warn('This dashboard only supports vendor role');
+      return;
+    }
     role.value = newRole;
   }
 
