@@ -101,7 +101,7 @@
         </form>
 
         <div class="form-footer">
-          <p>Contact the administrator for vendor account requests</p>
+          <p>© 2025 Papdaew. All rights reserved.</p>
         </div>
       </div>
     </div>

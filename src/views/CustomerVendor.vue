@@ -126,7 +126,9 @@
             </div>
           </template>
           <template #empty> No customers found. </template>
-          <template #loading> Loading customers data. Please wait. </template>
+          <template #loading>
+            <!-- Empty template to show nothing when loading -->
+          </template>
           <Column field="name" header="Name" style="min-width: 12rem">
             <template #body="{ data }">
               <div class="customer-name">{{ data.name }}</div>

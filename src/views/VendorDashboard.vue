@@ -145,7 +145,7 @@
             <span>Add Branch</span>
           </button>
           <button class="action-button">
-            <Icon icon="material-symbols:queue" />
+            <Icon icon="material-symbols:format-list-numbered" />
             <span>Manage Queues</span>
           </button>
           <button class="action-button">
