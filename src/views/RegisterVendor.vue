@@ -66,6 +66,39 @@
           }}
         </h3>
 
+        <!-- Add debug button at the top of the form -->
+        <div class="debug-section" v-if="isDevelopment">
+          <button type="button" class="debug-button" @click="prefillTestData">
+            Prefill Test Data (Development Only)
+          </button>
+          <button
+            type="button"
+            class="debug-button debug-button-delete"
+            @click="showDeleteConfirm = true"
+          >
+            Delete Test Data
+          </button>
+
+          <div class="delete-confirm" v-if="showDeleteConfirm">
+            <div class="delete-confirm-content">
+              <h4>Confirm Delete</h4>
+              <p>This will delete the test vendor. Are you sure?</p>
+              <div class="delete-confirm-actions">
+                <button type="button" @click="showDeleteConfirm = false">
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="delete-btn"
+                  @click="deleteTestData"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <form @submit.prevent="submitForm">
           <!-- Step 1: Basic Information -->
           <div v-if="currentStep === 1">
@@ -120,20 +153,115 @@
 
             <div class="form-row">
               <div class="form-group full-width">
-                <label for="address">Address :</label>
-                <textarea
-                  id="address"
-                  v-model="form.address"
-                  rows="3"
-                  placeholder="Enter your business address"
+                <label for="addressLine1">Address Line 1 :</label>
+                <input
+                  type="text"
+                  id="addressLine1"
+                  v-model="form.addressLine1"
+                  placeholder="Street address, building name, floor, etc."
                   class="form-input"
-                  :class="{ 'input-error': v$.address.$invalid && submitted }"
-                ></textarea>
+                  :class="{
+                    'input-error': v$.addressLine1.$invalid && submitted,
+                  }"
+                />
                 <small
-                  v-if="v$.address.$invalid && submitted"
+                  v-if="v$.addressLine1.$invalid && submitted"
                   class="error-text"
                 >
-                  {{ v$.address.$errors[0].$message }}
+                  {{ v$.addressLine1.$errors[0].$message }}
+                </small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="addressLine2">Address Line 2 (Optional) :</label>
+                <input
+                  type="text"
+                  id="addressLine2"
+                  v-model="form.addressLine2"
+                  placeholder="Additional address details"
+                  class="form-input"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="subdistrict">Subdistrict :</label>
+                <input
+                  type="text"
+                  id="subdistrict"
+                  v-model="form.subdistrict"
+                  placeholder="Enter subdistrict"
+                  class="form-input"
+                  :class="{
+                    'input-error': v$.subdistrict.$invalid && submitted,
+                  }"
+                />
+                <small
+                  v-if="v$.subdistrict.$invalid && submitted"
+                  class="error-text"
+                >
+                  {{ v$.subdistrict.$errors[0].$message }}
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="district">District :</label>
+                <input
+                  type="text"
+                  id="district"
+                  v-model="form.district"
+                  placeholder="Enter district"
+                  class="form-input"
+                  :class="{ 'input-error': v$.district.$invalid && submitted }"
+                />
+                <small
+                  v-if="v$.district.$invalid && submitted"
+                  class="error-text"
+                >
+                  {{ v$.district.$errors[0].$message }}
+                </small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="province">Province :</label>
+                <input
+                  type="text"
+                  id="province"
+                  v-model="form.province"
+                  placeholder="Enter province"
+                  class="form-input"
+                  :class="{ 'input-error': v$.province.$invalid && submitted }"
+                />
+                <small
+                  v-if="v$.province.$invalid && submitted"
+                  class="error-text"
+                >
+                  {{ v$.province.$errors[0].$message }}
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="postalCode">Postal Code :</label>
+                <input
+                  type="text"
+                  id="postalCode"
+                  v-model="form.postalCode"
+                  placeholder="Enter postal code"
+                  class="form-input"
+                  :class="{
+                    'input-error': v$.postalCode.$invalid && submitted,
+                  }"
+                />
+                <small
+                  v-if="v$.postalCode.$invalid && submitted"
+                  class="error-text"
+                >
+                  {{ v$.postalCode.$errors[0].$message }}
                 </small>
               </div>
             </div>
@@ -453,8 +581,32 @@
                   <span class="summary-value">{{ form.phone }}</span>
                 </div>
                 <div class="summary-row">
-                  <span class="summary-label">Address:</span>
-                  <span class="summary-value">{{ form.address }}</span>
+                  <span class="summary-label">Address Information:</span>
+                </div>
+                <!-- Summary of address information -->
+                <div class="summary-row">
+                  <span class="summary-label">Address Line 1:</span>
+                  <span class="summary-value">{{ form.addressLine1 }}</span>
+                </div>
+                <div class="summary-row" v-if="form.addressLine2">
+                  <span class="summary-label">Address Line 2:</span>
+                  <span class="summary-value">{{ form.addressLine2 }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Subdistrict:</span>
+                  <span class="summary-value">{{ form.subdistrict }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">District:</span>
+                  <span class="summary-value">{{ form.district }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Province:</span>
+                  <span class="summary-value">{{ form.province }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Postal Code:</span>
+                  <span class="summary-value">{{ form.postalCode }}</span>
                 </div>
               </div>
 
@@ -518,6 +670,8 @@ import {
   registerVendor,
   validateInvitationToken,
   uploadVendorImages,
+  createLocation,
+  deleteVendor,
 } from '../lib/api';
 import { handleFileSelection } from '../lib/fileUpload';
 
@@ -532,13 +686,27 @@ const submitted = ref(false);
 const currentStep = ref(1);
 const totalSteps = 3;
 
+// Fix the isDevelopment variable
+const isDevelopment = ref(true); // Force to true for development testing
+
+// Add these variables to the script
+const showDeleteConfirm = ref(false);
+
+// Add testVendorId reference
+const testVendorId = ref(null);
+
 // Form data - expanded to include all needed fields from the JSON
 const form = ref({
   // Step 1 - Basic Information
   name: '',
   email: '',
   phone: '',
-  address: '',
+  addressLine1: '',
+  addressLine2: '',
+  district: '',
+  subdistrict: '',
+  province: '',
+  postalCode: '',
   manager: '',
   manager_phone: '',
 
@@ -593,7 +761,7 @@ const businessTypes = [
   { value: 'OTHER', label: 'Other' },
 ];
 
-// Form validation rules - separated by steps
+// Update validation rules for the address fields
 const step1Rules = computed(() => {
   return {
     name: {
@@ -616,11 +784,27 @@ const step1Rules = computed(() => {
         )
       ),
     },
-    address: {
-      required: helpers.withMessage('Address is required', required),
+    addressLine1: {
+      required: helpers.withMessage('Address line 1 is required', required),
       minLength: helpers.withMessage(
         'Address must be at least 5 characters',
         minLength(5)
+      ),
+    },
+    district: {
+      required: helpers.withMessage('District is required', required),
+    },
+    subdistrict: {
+      required: helpers.withMessage('Subdistrict is required', required),
+    },
+    province: {
+      required: helpers.withMessage('Province is required', required),
+    },
+    postalCode: {
+      required: helpers.withMessage('Postal code is required', required),
+      validPostalCode: helpers.withMessage(
+        'Please enter a valid postal code (5 digits)',
+        helpers.regex(/^\d{5}$/)
       ),
     },
     manager: {
@@ -862,7 +1046,25 @@ const submitForm = async () => {
       form.value.username = form.value.email.split('@')[0];
     }
 
-    // Prepare the data to send to the API in the expected format
+    // Prepare location data
+    const locationData = {
+      name: form.value.name, // Use business name for location name
+      addressLine1: form.value.addressLine1,
+      addressLine2: form.value.addressLine2 || '',
+      district: form.value.district,
+      subdistrict: form.value.subdistrict,
+      province: form.value.province,
+      postalCode: form.value.postalCode,
+      country: 'Thailand',
+      type: 'STANDALONE',
+      status: 'active',
+    };
+
+    // First create the location
+    const locationResponse = await createLocation(locationData);
+    const locationId = locationResponse.data.id;
+
+    // Prepare vendor data with locationId
     const vendorData = {
       businessName: form.value.name,
       businessDescription: form.value.businessDescription,
@@ -881,7 +1083,7 @@ const submitForm = async () => {
       username: form.value.username,
       manager: form.value.manager,
       manager_phone: form.value.manager_phone,
-      address: form.value.address,
+      locationId: locationId, // Reference to the created location
       status: 'active',
     };
 
@@ -943,6 +1145,134 @@ const submitForm = async () => {
     toast.error(errorMessage.value, {
       position: 'top-right',
       duration: 5000,
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Update prefillTestData to set the testVendorId
+const prefillTestData = () => {
+  form.value = {
+    // Step 1 - Basic Information
+    name: 'KFC Thailand',
+    email: 'contact@kfcthailand.com',
+    phone: '+6622345678',
+    addressLine1: '11/1 Central World, Floor 7',
+    addressLine2: 'Rama I Road',
+    district: 'Pathum Wan',
+    subdistrict: 'Pathum Wan',
+    province: 'Bangkok',
+    postalCode: '10330',
+    manager: 'John Smith',
+    manager_phone: '+6699887766',
+
+    // Step 2 - Business Details
+    businessDescription:
+      'Kentucky Fried Chicken - Fast food restaurant specializing in fried chicken',
+    businessType: 'RESTAURANT',
+    website: 'https://www.kfcthailand.com',
+    socialMedia: {
+      facebook: 'https://www.facebook.com/kfcthailand',
+      instagram: 'https://www.instagram.com/kfcthailand',
+      twitter: 'https://twitter.com/kfcthailand',
+      line: '@kfcthailand',
+    },
+
+    // Step 3 - Operating Hours
+    businessHours: [
+      { day: 0, open: '10:00', close: '22:00', isClosed: false }, // Sunday
+      { day: 1, open: '10:00', close: '22:00', isClosed: false }, // Monday
+      { day: 2, open: '10:00', close: '22:00', isClosed: false }, // Tuesday
+      { day: 3, open: '10:00', close: '22:00', isClosed: false }, // Wednesday
+      { day: 4, open: '10:00', close: '22:00', isClosed: false }, // Thursday
+      { day: 5, open: '09:00', close: '23:00', isClosed: false }, // Friday
+      { day: 6, open: '09:00', close: '23:00', isClosed: false }, // Saturday
+    ],
+
+    username: 'kfcthailand',
+    images: [],
+    status: 'active',
+  };
+
+  // Set fake logo and banner previews
+  logoPreview.value = 'https://storage.papdaew.com/vendors/kfc-logo.png';
+  bannerPreview.value = 'https://storage.papdaew.com/vendors/kfc-banner.jpg';
+
+  // For testing, set a hardcoded test vendor ID
+  testVendorId.value = '64f8a1b2c3d4e5f6a7b8c9d0'; // This would normally come from the API response
+
+  toast.success('Test data loaded!', { position: 'top-right', duration: 3000 });
+};
+
+// Update deleteTestData to use the API
+const deleteTestData = async () => {
+  try {
+    if (!testVendorId.value) {
+      toast.error('No test vendor ID available', {
+        position: 'top-right',
+        duration: 3000,
+      });
+      showDeleteConfirm.value = false;
+      return;
+    }
+
+    loading.value = true;
+
+    // Call the API to delete the vendor
+    await deleteVendor(testVendorId.value);
+
+    // Reset the form data
+    form.value = {
+      name: '',
+      email: '',
+      phone: '',
+      addressLine1: '',
+      addressLine2: '',
+      district: '',
+      subdistrict: '',
+      province: '',
+      postalCode: '',
+      manager: '',
+      manager_phone: '',
+      businessDescription: '',
+      businessType: 'RESTAURANT',
+      website: '',
+      socialMedia: {
+        facebook: '',
+        instagram: '',
+        twitter: '',
+        line: '',
+      },
+      businessHours: [
+        { day: 0, open: '09:00', close: '18:00', isClosed: false },
+        { day: 1, open: '09:00', close: '18:00', isClosed: false },
+        { day: 2, open: '09:00', close: '18:00', isClosed: false },
+        { day: 3, open: '09:00', close: '18:00', isClosed: false },
+        { day: 4, open: '09:00', close: '18:00', isClosed: false },
+        { day: 5, open: '09:00', close: '18:00', isClosed: false },
+        { day: 6, open: '09:00', close: '18:00', isClosed: false },
+      ],
+      username: '',
+      images: [],
+      status: 'active',
+    };
+
+    // Reset previews
+    logoPreview.value = '';
+    bannerPreview.value = '';
+    testVendorId.value = null;
+
+    showDeleteConfirm.value = false;
+    toast.success('Test vendor deleted successfully!', {
+      position: 'top-right',
+      duration: 3000,
+    });
+  } catch (err) {
+    console.error('Error deleting test data:', err);
+    toast.error('Failed to delete test data', {
+      position: 'top-right',
+      duration: 3000,
     });
   } finally {
     loading.value = false;
@@ -1402,5 +1732,92 @@ select.form-input {
     width: 100%;
     margin-bottom: 4px;
   }
+}
+
+/* Debug Section Styles */
+.debug-section {
+  background-color: #f8f9fa;
+  border: 1px dashed #6b9080;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+
+.debug-button {
+  background-color: #6b9080;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.debug-button:hover {
+  background-color: #5a7b6c;
+}
+
+.debug-button-delete {
+  background-color: #e74c3c;
+}
+
+.debug-button-delete:hover {
+  background-color: #c0392b;
+}
+
+.delete-confirm {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.delete-confirm-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.delete-confirm-content h4 {
+  margin-top: 0;
+  color: #333;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.delete-confirm-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.delete-confirm-actions button:first-child {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.delete-btn {
+  background-color: #e74c3c;
+  color: white;
 }
 </style>

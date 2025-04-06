@@ -85,44 +85,25 @@
           <h2>Customer List</h2>
           <p class="card-description">Manage all your registered customers</p>
         </div>
-        <div class="card-actions">
-          <button class="filter-button">
-            <Icon icon="material-symbols:filter-list" />
-            <span>Filters</span>
-          </button>
-        </div>
       </div>
 
       <div class="table-container">
         <DataTable
-          v-model:filters="filters"
           :value="customers"
           paginator
           :rows="10"
           dataKey="id"
-          filterDisplay="row"
           :loading="loading"
-          :globalFilterFields="[
-            'name',
-            'phone',
-            'branch.name',
-            'queue',
-            'status',
-          ]"
           class="customer-table"
         >
           <template #header>
             <div class="table-header">
-              <IconField class="search-field">
-                <InputIcon>
+              <div class="search-container">
+                <span class="p-input-icon-left">
                   <i class="pi pi-search" />
-                </InputIcon>
-                <InputText
-                  v-model="filters['global'].value"
-                  placeholder="Search customers..."
-                  class="search-input"
-                />
-              </IconField>
+                  <InputText placeholder="Search customers..." />
+                </span>
+              </div>
             </div>
           </template>
           <template #empty> No customers found. </template>
@@ -133,85 +114,29 @@
             <template #body="{ data }">
               <div class="customer-name">{{ data.name }}</div>
             </template>
-            <template #filter="{ filterModel, filterCallback }">
-              <InputText
-                v-model="filterModel.value"
-                type="text"
-                @input="filterCallback()"
-                placeholder="Search by name"
-                class="filter-input"
-              />
-            </template>
           </Column>
           <Column header="Phone Number" style="min-width: 12rem">
             <template #body="{ data }">
               <div class="customer-phone">{{ data.phone }}</div>
             </template>
           </Column>
-          <Column
-            header="Branch"
-            filterField="branch"
-            :showFilterMenu="false"
-            style="min-width: 14rem"
-          >
+          <Column header="Branch" style="min-width: 14rem">
             <template #body="{ data }">
               <div class="customer-branch">{{ data.branch.name }}</div>
             </template>
-            <template #filter="{ filterModel, filterCallback }">
-              <MultiSelect
-                v-model="filterModel.value"
-                @change="filterCallback()"
-                :options="branchs"
-                optionLabel="name"
-                placeholder="Any"
-                class="filter-select"
-                :maxSelectedLabels="1"
-              >
-                <template #option="slotProps">
-                  <div>{{ slotProps.option.name }}</div>
-                </template>
-              </MultiSelect>
-            </template>
           </Column>
-          <Column
-            field="queue"
-            header="Queue"
-            :showFilterMenu="false"
-            style="min-width: 12rem"
-          >
+          <Column field="queue" header="Queue" style="min-width: 12rem">
             <template #body="{ data }">
               <div class="customer-queue">{{ data.queue }}</div>
             </template>
           </Column>
-          <Column
-            field="status"
-            header="Status"
-            :showFilterMenu="false"
-            style="min-width: 12rem"
-          >
+          <Column field="status" header="Status" style="min-width: 12rem">
             <template #body="{ data }">
               <Tag
                 :value="data.status"
                 :severity="getSeverity(data.status)"
                 class="status-tag"
               />
-            </template>
-            <template #filter="{ filterModel, filterCallback }">
-              <Select
-                v-model="filterModel.value"
-                @change="filterCallback()"
-                :options="statuses"
-                placeholder="Select Status"
-                class="filter-select"
-                :showClear="true"
-              >
-                <template #option="slotProps">
-                  <Tag
-                    :value="slotProps.option"
-                    :severity="getSeverity(slotProps.option)"
-                  />
-                </template>
-              </Select>
             </template>
           </Column>
           <Column
@@ -228,14 +153,6 @@
                   'pi-times-circle not-verified': !data.verified,
                 }"
               ></i>
-            </template>
-            <template #filter="{ filterModel, filterCallback }">
-              <Checkbox
-                v-model="filterModel.value"
-                :indeterminate="filterModel.value === null"
-                binary
-                @change="filterCallback()"
-              />
             </template>
           </Column>
           <Column
@@ -262,37 +179,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { FilterMatchMode } from '@primevue/core/api';
 import { Icon } from '@iconify/vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 import InputText from 'primevue/inputtext';
-import MultiSelect from 'primevue/multiselect';
-import Select from 'primevue/select';
-import Checkbox from 'primevue/checkbox';
-import IconField from 'primevue/iconfield';
-import InputIcon from 'primevue/inputicon';
 
 const customers = ref([]);
-const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-  phone: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-  branch: { value: null, matchMode: FilterMatchMode.IN },
-  queue: { value: null, matchMode: FilterMatchMode.EQUALS },
-  status: { value: null, matchMode: FilterMatchMode.EQUALS },
-  verified: { value: null, matchMode: FilterMatchMode.EQUALS },
-});
-const branchs = ref([
-  { name: 'Central World' },
-  { name: 'Central Rama3' },
-  { name: 'Seacon Bangkaphi' },
-  { name: 'Central Pinklao' },
-  { name: 'Robinson Ladkrabang' },
-  { name: 'Central Bangna' },
-]);
-const statuses = ref(['Inactive', 'Active', 'New', 'Blacklist', 'unqualified']);
 const loading = ref(true);
 
 const getSeverity = status => {
@@ -553,46 +446,23 @@ const mockCustomers = [
   margin: 4px 0 0 0;
 }
 
-.filter-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: #f5f7fa;
-  color: #555;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.filter-button:hover {
-  background-color: #e6f0eb;
-}
-
 .table-container {
   padding: 20px;
 }
 
 .table-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  align-items: center;
   margin-bottom: 20px;
 }
 
-.search-field {
+.search-container {
   width: 300px;
 }
 
 .search-input {
   width: 100%;
-}
-
-.filter-input,
-.filter-select {
-  width: 100%;
-  font-size: 14px;
 }
 
 /* DataTable customization */
@@ -629,11 +499,44 @@ const mockCustomers = [
   border-color: #f5f5f5;
 }
 
-:deep(.p-tag) {
-  font-size: 12px;
+/* Dropdown styling */
+:deep(.p-dropdown-panel) {
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 6px;
+}
+
+:deep(.p-dropdown-items) {
+  padding: 0;
+}
+
+:deep(.p-dropdown-item) {
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  color: #333;
+  background-color: white;
+  border-radius: 6px;
+  transition: all 0.2s ease;
   font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.p-dropdown-item:last-child) {
+  margin-bottom: 0;
+}
+
+:deep(.p-dropdown-item:hover) {
+  background-color: #e6f0eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.p-dropdown-item.p-highlight) {
+  background-color: #6b9080;
+  color: white;
+  box-shadow: 0 2px 5px rgba(107, 144, 128, 0.3);
 }
 
 .customer-name {
@@ -695,28 +598,13 @@ const mockCustomers = [
 }
 
 /* Responsive adjustments */
-@media (max-width: 1024px) {
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
-  .table-header {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .search-field {
+  .search-container {
     width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .metrics-grid {
-    grid-template-columns: 1fr;
-  }
-
   .page-header {
     flex-direction: column;
     align-items: flex-start;

@@ -120,6 +120,7 @@ import { Icon } from '@iconify/vue';
 
 h3 {
   color: #9e9e9e;
+  text-align: center;
   font-size: 12px;
   letter-spacing: 1px;
   margin-bottom: 8px;

@@ -12,22 +12,29 @@ const api = axios.create({
 
 // Create specific API instance for vendor service
 const vendorApi = axios.create({
-  baseURL: '/api/v1/vendors',
+  baseURL: 'http://localhost:3004/api/v1/vendors',
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 15000,
-  withCredentials: true,
 });
 
 // Create API instance for admin service
 const adminApi = axios.create({
-  baseURL: '/api/v1/admin',
+  baseURL: 'http://localhost:3006/api/v1/admin',
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 15000,
-  withCredentials: true,
+});
+
+// Create API instance for location service
+const locationApi = axios.create({
+  baseURL: 'http://localhost:3007/api/v1/locations',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 15000,
 });
 
 // Error handling interceptor
@@ -78,16 +85,62 @@ export const validateInvitationToken = async token => {
 };
 
 // Upload vendor images
-export const uploadVendorImages = async (vendorId, formData) => {
+export const uploadVendorImages = async (
+  vendorId,
+  formData,
+  imageType = 'gallery'
+) => {
   try {
-    const response = await vendorApi.post(`/${vendorId}/images`, formData, {
+    // Determine the endpoint based on the image type
+    let endpoint = `/${vendorId}/images`;
+
+    // Different endpoints for different image types
+    if (imageType === 'logo') {
+      endpoint = `/${vendorId}/logo`;
+    } else if (imageType === 'banner') {
+      endpoint = `/${vendorId}/banner`;
+    }
+
+    const response = await vendorApi.post(endpoint, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
     return response.data;
   } catch (error) {
-    console.error('Error uploading vendor images:', error);
+    console.error(`Error uploading vendor ${imageType}:`, error);
+    throw error;
+  }
+};
+
+// Location service API calls
+export const createLocation = async locationData => {
+  try {
+    const response = await locationApi.post('', locationData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating location:', error);
+    throw error;
+  }
+};
+
+export const getLocationById = async locationId => {
+  try {
+    const response = await locationApi.get(`/${locationId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting location:', error);
+    throw error;
+  }
+};
+
+// Delete vendor (for test data cleanup)
+export const deleteVendor = async vendorId => {
+  try {
+    const response = await vendorApi.delete(`/${vendorId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting vendor:', error);
     throw error;
   }
 };
@@ -96,4 +149,7 @@ export default {
   registerVendor,
   validateInvitationToken,
   uploadVendorImages,
+  createLocation,
+  getLocationById,
+  deleteVendor,
 };
