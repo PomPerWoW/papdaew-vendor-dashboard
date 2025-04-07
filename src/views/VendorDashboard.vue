@@ -5,7 +5,11 @@
       <div class="header-left">
         <h1>Dashboard</h1>
         <p class="welcome-message">
-          Welcome back, <span class="vendor-name">Bangkok Kitchen</span>
+          Welcome back,
+          <span class="vendor-name">{{ user?.data.username || 'Vendor' }}</span>
+          <span v-if="!userStore.isRootAccount" class="branch-indicator"
+            >({{ branchName }} Branch)</span
+          >
         </p>
       </div>
       <div class="header-right">
@@ -24,7 +28,7 @@
         </div>
         <div class="card-content">
           <h3 class="card-title">Total Customers</h3>
-          <p class="card-value">1,245</p>
+          <p class="card-value">{{ totalCustomers }}</p>
           <div class="card-trend positive">
             <Icon icon="material-symbols:trending-up" />
             <span>8.7% vs last month</span>
@@ -38,7 +42,7 @@
         </div>
         <div class="card-content">
           <h3 class="card-title">Active Queues</h3>
-          <p class="card-value">32</p>
+          <p class="card-value">{{ activeQueues }}</p>
           <div class="card-trend negative">
             <Icon icon="material-symbols:trending-down" />
             <span>3.5% vs yesterday</span>
@@ -52,7 +56,9 @@
         </div>
         <div class="card-content">
           <h3 class="card-title">Average Rating</h3>
-          <p class="card-value">4.8<span class="rating-max">/5</span></p>
+          <p class="card-value">
+            {{ averageRating }}<span class="rating-max">/5</span>
+          </p>
           <div class="card-trend neutral">
             <Icon icon="material-symbols:trending-flat" />
             <span>Same as last month</span>
@@ -68,7 +74,10 @@
         <div class="chart-header">
           <div>
             <h2>Performance Overview</h2>
-            <p class="chart-subtitle">Monthly customer visits</p>
+            <p class="chart-subtitle">
+              {{ userStore.isRootAccount ? 'All Branches' : 'Your Branch' }} -
+              Monthly customer visits
+            </p>
           </div>
           <div class="chart-controls">
             <select v-model="chartPeriod" class="period-select">
@@ -97,8 +106,8 @@
         </div>
       </div>
 
-      <!-- Branch Status -->
-      <div class="branches-section">
+      <!-- Branch Status - Only for root accounts -->
+      <div v-if="userStore.isRootAccount" class="branches-section">
         <div class="section-header">
           <h2>Branch Status</h2>
           <router-link to="/branch" class="view-all">View All</router-link>
@@ -140,13 +149,26 @@
         </div>
 
         <div class="action-buttons">
-          <button class="action-button">
+          <!-- Root Account Actions -->
+          <button v-if="userStore.isRootAccount" class="action-button">
             <Icon icon="material-symbols:add-business" />
             <span>Add Branch</span>
           </button>
-          <button class="action-button">
+
+          <!-- Branch Staff Actions -->
+          <router-link
+            v-if="userStore.isStaff && !userStore.isRootAccount"
+            to="/queue-vendor"
+            class="action-button"
+          >
             <Icon icon="material-symbols:format-list-numbered" />
-            <span>Manage Queues</span>
+            <span>Manage Queue</span>
+          </router-link>
+
+          <!-- Common Actions -->
+          <button class="action-button">
+            <Icon icon="material-symbols:person" />
+            <span>View Customers</span>
           </button>
           <button class="action-button">
             <Icon icon="material-symbols:bar-chart" />
@@ -163,8 +185,49 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Icon } from '@iconify/vue';
+import { useUserStore } from '../stores/counter';
+
+const userStore = useUserStore();
+const user = computed(() => userStore.user);
+const branchName = ref('');
+const totalCustomers = ref(1245);
+const activeQueues = ref(32);
+const averageRating = ref(4.8);
+
+// Fetch data based on user type (root or branch staff)
+onMounted(async () => {
+  if (userStore.isRootAccount) {
+    // Fetch aggregate data across all branches
+    fetchAllBranchesData();
+  } else if (userStore.branchId) {
+    // Fetch data for specific branch
+    fetchBranchData(userStore.branchId);
+  }
+});
+
+// Fetch data for all branches (root account)
+const fetchAllBranchesData = async () => {
+  // In a real app, this would make API calls
+  console.log('Fetching data for all branches');
+  // Mock data for now
+  totalCustomers.value = 1245;
+  activeQueues.value = 32;
+  averageRating.value = 4.8;
+};
+
+// Fetch data for a specific branch (branch staff)
+const fetchBranchData = async branchId => {
+  // In a real app, this would make API calls
+  console.log(`Fetching data for branch ${branchId}`);
+  // Mock data for now
+  totalCustomers.value = 325;
+  activeQueues.value = 8;
+  averageRating.value = 4.6;
+  branchName.value =
+    branches.find(b => b.id === userStore.branchId)?.name || 'Your';
+};
 
 // Get current date
 const currentDate = computed(() => {
@@ -197,31 +260,27 @@ const monthlyCustomers = {
 // Branch data
 const branches = [
   {
+    id: 'branch1',
     name: 'Silom Branch',
-    status: 'active',
-    currentCustomers: 45,
-    capacity: 60,
+    status: 'open',
+    currentCustomers: 32,
+    capacity: 50,
     queueCount: 12,
   },
   {
-    name: 'Siam Paragon',
-    status: 'active',
-    currentCustomers: 28,
-    capacity: 40,
-    queueCount: 8,
+    id: 'branch2',
+    name: 'Asoke Branch',
+    status: 'busy',
+    currentCustomers: 45,
+    capacity: 60,
+    queueCount: 28,
   },
   {
-    name: 'Central World',
-    status: 'active',
-    currentCustomers: 35,
-    capacity: 50,
-    queueCount: 15,
-  },
-  {
-    name: 'EmQuartier',
-    status: 'maintenance',
+    id: 'branch3',
+    name: 'Siam Branch',
+    status: 'closed',
     currentCustomers: 0,
-    capacity: 45,
+    capacity: 40,
     queueCount: 0,
   },
 ];
@@ -536,19 +595,19 @@ const branches = [
   text-transform: capitalize;
 }
 
-.status-badge.active {
+.status-badge.open {
   background-color: rgba(72, 187, 120, 0.1);
   color: #48bb78;
 }
 
-.status-badge.inactive {
-  background-color: rgba(160, 174, 192, 0.1);
-  color: #a0aec0;
-}
-
-.status-badge.maintenance {
+.status-badge.busy {
   background-color: rgba(237, 137, 54, 0.1);
   color: #ed8936;
+}
+
+.status-badge.closed {
+  background-color: rgba(160, 174, 192, 0.1);
+  color: #a0aec0;
 }
 
 .branch-stats {
@@ -604,11 +663,16 @@ const branches = [
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+  color: inherit;
+  text-decoration: none;
 }
 
 .action-button:hover {
   background-color: #f0f7f4;
+  transform: translateY(-3px);
 }
 
 .action-button svg {
@@ -679,5 +743,12 @@ const branches = [
     align-items: flex-start;
     gap: 10px;
   }
+}
+
+.branch-indicator {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: normal;
+  margin-left: 8px;
 }
 </style>

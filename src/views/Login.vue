@@ -113,8 +113,10 @@ import { ref, computed, defineComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toast-notification';
 import { Icon } from '@iconify/vue';
+import { useUserStore } from '../stores/counter';
 import logoURL from '../assets/logo.png';
 import illustrationSrc from '../assets/register-vector-image.png';
+import { login, getCurrentUser } from '../lib/api';
 
 defineComponent({
   name: 'VendorLogin',
@@ -122,6 +124,7 @@ defineComponent({
 
 const router = useRouter();
 const $toast = useToast();
+const userStore = useUserStore();
 
 const form = ref({
   identifier: '',
@@ -166,17 +169,26 @@ const submitForm = async () => {
   try {
     loading.value = true;
 
-    // Here you would call your authentication API
-    // For now, we'll simulate an API call with a timeout
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Prepare login data
+    const loginData = {
+      identifier: form.value.identifier,
+      password: form.value.password,
+    };
 
-    // Store token and user data
-    if (rememberMe.value) {
-      localStorage.setItem('rememberVendorLogin', 'true');
+    // Make the login API request
+    await login(loginData);
+
+    try {
+      // Fetch user data after successful login
+      const userData = await getCurrentUser();
+
+      // Store user data in the user store
+      userStore.setUser(userData);
+    } catch (userDataError) {
+      console.error('Error fetching user data after login:', userDataError);
+      // Continue with login flow even if we can't get user data
+      // The router guard will fetch it on the next protected page
     }
-
-    // Store auth token (from real API response)
-    localStorage.setItem('vendorAuthToken', 'sample-token');
 
     // Show success message
     $toast.success('Login successful! Redirecting to dashboard...', {
@@ -191,8 +203,12 @@ const submitForm = async () => {
   } catch (error) {
     console.error('Login error:', error);
 
-    // Show error message
-    errorMessage.value = 'Invalid credentials. Please try again.';
+    // Handle specific error messages from the API
+    if (error.response && error.response.data && error.response.data.message) {
+      errorMessage.value = error.response.data.message;
+    } else {
+      errorMessage.value = 'Invalid credentials. Please try again.';
+    }
 
     $toast.error('Login failed. Please check your credentials.', {
       position: 'top-right',
