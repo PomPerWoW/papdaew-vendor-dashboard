@@ -20,164 +20,210 @@
       </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="summary-cards">
-      <div class="summary-card customers">
-        <div class="card-icon">
-          <Icon icon="material-symbols:groups" />
-        </div>
-        <div class="card-content">
-          <h3 class="card-title">Total Customers</h3>
-          <p class="card-value">{{ totalCustomers }}</p>
-          <div class="card-trend positive">
-            <Icon icon="material-symbols:trending-up" />
-            <span>8.7% vs last month</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="summary-card queues">
-        <div class="card-icon">
-          <Icon icon="material-symbols:format-list-numbered" />
-        </div>
-        <div class="card-content">
-          <h3 class="card-title">Active Queues</h3>
-          <p class="card-value">{{ activeQueues }}</p>
-          <div class="card-trend negative">
-            <Icon icon="material-symbols:trending-down" />
-            <span>3.5% vs yesterday</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="summary-card ratings">
-        <div class="card-icon">
-          <Icon icon="material-symbols:star" />
-        </div>
-        <div class="card-content">
-          <h3 class="card-title">Average Rating</h3>
-          <p class="card-value">
-            {{ averageRating }}<span class="rating-max">/5</span>
-          </p>
-          <div class="card-trend neutral">
-            <Icon icon="material-symbols:trending-flat" />
-            <span>Same as last month</span>
-          </div>
-        </div>
-      </div>
+    <div v-if="loading" class="loading-container">
+      <p>Loading dashboard data...</p>
     </div>
 
-    <!-- Main Content -->
-    <div class="dashboard-content">
-      <!-- Chart Section -->
-      <div class="chart-section">
-        <div class="chart-header">
-          <div>
-            <h2>Performance Overview</h2>
-            <p class="chart-subtitle">
-              {{ userStore.isRootAccount ? 'All Branches' : 'Your Branch' }} -
-              Monthly customer visits
-            </p>
+    <div v-else>
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card customers">
+          <div class="card-icon">
+            <Icon icon="material-symbols:groups" />
           </div>
-          <div class="chart-controls">
-            <select v-model="chartPeriod" class="period-select">
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="year">This Year</option>
-            </select>
-          </div>
-        </div>
-        <div class="chart-placeholder">
-          <!-- In a real app, a chart component would be used here -->
-          <div class="chart-bars">
-            <div
-              v-for="(value, month) in monthlyCustomers"
-              :key="month"
-              class="chart-bar-container"
-            >
-              <div
-                class="chart-bar"
-                :style="{ height: `${value / 10}%` }"
-              ></div>
-              <span class="chart-label">{{ month }}</span>
+          <div class="card-content">
+            <h3 class="card-title">Total Customers</h3>
+            <p class="card-value">{{ totalCustomers.toLocaleString() }}</p>
+            <div class="card-trend" :class="customerTrend.direction">
+              <Icon
+                :icon="
+                  'material-symbols:trending-' +
+                  (customerTrend.direction === 'neutral'
+                    ? 'flat'
+                    : customerTrend.direction === 'positive'
+                      ? 'up'
+                      : 'down')
+                "
+              />
+              <span
+                >{{ customerTrend.percentage }}% vs previous
+                {{ chartPeriod }}</span
+              >
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Branch Status - Only for root accounts -->
-      <div v-if="userStore.isRootAccount" class="branches-section">
-        <div class="section-header">
-          <h2>Branch Status</h2>
-          <router-link to="/branch" class="view-all">View All</router-link>
-        </div>
-
-        <div class="branch-cards">
-          <div
-            v-for="(branch, index) in branches"
-            :key="index"
-            class="branch-card"
-          >
-            <div class="branch-header">
-              <h3>{{ branch.name }}</h3>
-              <span class="status-badge" :class="branch.status">{{
-                branch.status
-              }}</span>
-            </div>
-            <div class="branch-stats">
-              <div class="stat">
-                <Icon icon="material-symbols:people" />
-                <span>{{ branch.currentCustomers }}/{{ branch.capacity }}</span>
-              </div>
-              <div class="stat">
-                <Icon icon="material-symbols:format-list-numbered" />
-                <span>{{ branch.queueCount }} in queue</span>
-              </div>
-            </div>
-            <div class="branch-footer">
-              <button class="branch-action">Manage Queue</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div class="quick-actions-section">
-        <div class="section-header">
-          <h2>Quick Actions</h2>
-        </div>
-
-        <div class="action-buttons">
-          <!-- Root Account Actions -->
-          <button v-if="userStore.isRootAccount" class="action-button">
-            <Icon icon="material-symbols:add-business" />
-            <span>Add Branch</span>
-          </button>
-
-          <!-- Branch Staff Actions -->
-          <router-link
-            v-if="userStore.isStaff && !userStore.isRootAccount"
-            to="/queue-vendor"
-            class="action-button"
-          >
+        <div class="summary-card queues">
+          <div class="card-icon">
             <Icon icon="material-symbols:format-list-numbered" />
-            <span>Manage Queue</span>
-          </router-link>
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Active Queues</h3>
+            <p class="card-value">{{ activeQueues.toLocaleString() }}</p>
+            <div class="card-trend" :class="queueTrend.direction">
+              <Icon
+                :icon="
+                  'material-symbols:trending-' +
+                  (queueTrend.direction === 'neutral'
+                    ? 'flat'
+                    : queueTrend.direction === 'positive'
+                      ? 'up'
+                      : 'down')
+                "
+              />
+              <span
+                >{{ queueTrend.percentage }}% vs previous
+                {{ chartPeriod }}</span
+              >
+            </div>
+          </div>
+        </div>
 
-          <!-- Common Actions -->
-          <button class="action-button">
-            <Icon icon="material-symbols:person" />
-            <span>View Customers</span>
-          </button>
-          <button class="action-button">
-            <Icon icon="material-symbols:bar-chart" />
-            <span>View Reports</span>
-          </button>
-          <button class="action-button">
-            <Icon icon="material-symbols:support-agent" />
-            <span>Get Support</span>
-          </button>
+        <div class="summary-card ratings">
+          <div class="card-icon">
+            <Icon icon="material-symbols:star" />
+          </div>
+          <div class="card-content">
+            <h3 class="card-title">Average Rating</h3>
+            <p class="card-value">
+              {{ averageRating.toFixed(1) }}<span class="rating-max">/5</span>
+            </p>
+            <div class="card-trend" :class="ratingTrend.direction">
+              <Icon
+                :icon="
+                  'material-symbols:trending-' +
+                  (ratingTrend.direction === 'neutral'
+                    ? 'flat'
+                    : ratingTrend.direction === 'positive'
+                      ? 'up'
+                      : 'down')
+                "
+              />
+              <span
+                >{{ ratingTrend.percentage }}% vs previous
+                {{ chartPeriod }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="dashboard-content">
+        <!-- Chart Section -->
+        <div class="chart-section">
+          <div class="chart-header">
+            <div>
+              <h2>Performance Overview</h2>
+              <p class="chart-subtitle">
+                {{ userStore.isRootAccount ? 'All Branches' : 'Your Branch' }} -
+                Monthly customer visits
+              </p>
+            </div>
+            <div class="chart-controls">
+              <select v-model="chartPeriod" class="period-select">
+                <option value="day">Today</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-placeholder">
+            <!-- In a real app, a chart component would be used here -->
+            <div class="chart-bars">
+              <div
+                v-for="(value, month) in monthlyCustomers"
+                :key="month"
+                class="chart-bar-container"
+              >
+                <div
+                  class="chart-bar"
+                  :style="{
+                    height: `${Math.min((value / (Math.max(...Object.values(monthlyCustomers)) || 1)) * 100, 100)}%`,
+                  }"
+                ></div>
+                <span class="chart-label">{{ month }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Branch Status - Only for root accounts -->
+        <div v-if="userStore.isRootAccount" class="branches-section">
+          <div class="section-header">
+            <h2>Branch Status</h2>
+            <router-link to="/branch" class="view-all">View All</router-link>
+          </div>
+
+          <div class="branch-cards">
+            <div
+              v-for="(branch, index) in branches"
+              :key="index"
+              class="branch-card"
+            >
+              <div class="branch-header">
+                <h3>{{ branch.name }}</h3>
+                <span class="status-badge" :class="branch.status">{{
+                  branch.status
+                }}</span>
+              </div>
+              <div class="branch-stats">
+                <div class="stat">
+                  <Icon icon="material-symbols:people" />
+                  <span
+                    >{{ branch.currentCustomers }}/{{ branch.capacity }}</span
+                  >
+                </div>
+                <div class="stat">
+                  <Icon icon="material-symbols:format-list-numbered" />
+                  <span>{{ branch.queueCount }} in queue</span>
+                </div>
+              </div>
+              <div class="branch-footer">
+                <button class="branch-action">Manage Queue</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-section">
+          <div class="section-header">
+            <h2>Quick Actions</h2>
+          </div>
+
+          <div class="action-buttons">
+            <!-- Root Account Actions -->
+            <button v-if="userStore.isRootAccount" class="action-button">
+              <Icon icon="material-symbols:add-business" />
+              <span>Add Branch</span>
+            </button>
+
+            <!-- Branch Staff Actions -->
+            <router-link
+              v-if="userStore.isStaff && !userStore.isRootAccount"
+              to="/queue-vendor"
+              class="action-button"
+            >
+              <Icon icon="material-symbols:format-list-numbered" />
+              <span>Manage Queue</span>
+            </router-link>
+
+            <!-- Common Actions -->
+            <button class="action-button">
+              <Icon icon="material-symbols:person" />
+              <span>View Customers</span>
+            </button>
+            <button class="action-button">
+              <Icon icon="material-symbols:bar-chart" />
+              <span>View Reports</span>
+            </button>
+            <button class="action-button">
+              <Icon icon="material-symbols:support-agent" />
+              <span>Get Support</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -185,48 +231,233 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watchEffect } from 'vue';
 import { Icon } from '@iconify/vue';
 import { useUserStore } from '../stores/counter';
+import {
+  getBranches,
+  getVendorAnalyticsOverview,
+  getCustomerAnalytics,
+  getRatingsAnalytics,
+} from '../lib/api';
 
 const userStore = useUserStore();
 const user = computed(() => userStore.user);
 const branchName = ref('');
-const totalCustomers = ref(1245);
-const activeQueues = ref(32);
-const averageRating = ref(4.8);
+const totalCustomers = ref(0);
+const activeQueues = ref(0);
+const averageRating = ref(0);
+const loading = ref(true);
+const analyticsData = ref(null);
+const customerTrend = ref({
+  percentage: 0,
+  direction: 'neutral',
+});
+const queueTrend = ref({
+  percentage: 0,
+  direction: 'neutral',
+});
+const ratingTrend = ref({
+  percentage: 0,
+  direction: 'neutral',
+});
+
+// Period state
+const chartPeriod = ref('month');
+
+// Branches data
+const branches = ref([]);
 
 // Fetch data based on user type (root or branch staff)
 onMounted(async () => {
-  if (userStore.isRootAccount) {
-    // Fetch aggregate data across all branches
-    fetchAllBranchesData();
-  } else if (userStore.branchId) {
-    // Fetch data for specific branch
-    fetchBranchData(userStore.branchId);
+  loading.value = true;
+  try {
+    if (userStore.isRootAccount) {
+      // Fetch aggregate data across all branches
+      await fetchAllBranchesData();
+    } else if (userStore.branchId) {
+      // Fetch data for specific branch
+      await fetchBranchData(userStore.branchId);
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+  } finally {
+    loading.value = false;
   }
 });
 
 // Fetch data for all branches (root account)
-const fetchAllBranchesData = async () => {
-  // In a real app, this would make API calls
-  console.log('Fetching data for all branches');
-  // Mock data for now
-  totalCustomers.value = 1245;
-  activeQueues.value = 32;
-  averageRating.value = 4.8;
+const fetchAllBranchesData = async (period = 'month') => {
+  const vendorId = userStore.user.data.staff.vendorId;
+
+  try {
+    // Get vendor analytics overview
+    const analyticsResponse = await getVendorAnalyticsOverview(
+      vendorId,
+      period
+    );
+    if (analyticsResponse.status === 'success') {
+      analyticsData.value = analyticsResponse.data;
+
+      // Update metrics from the response
+      totalCustomers.value =
+        analyticsData.value.vendorMetrics.totalCustomers || 0;
+      activeQueues.value = analyticsData.value.vendorMetrics.totalQueues || 0;
+      averageRating.value = analyticsData.value.vendorMetrics.avgRating || 0;
+
+      // Get branches data
+      const branchesResponse = await getBranches(vendorId);
+      if (branchesResponse.status === 'success') {
+        // Map branches to the format expected by the UI
+        branches.value = branchesResponse.data.map(branch => {
+          const branchMetrics =
+            analyticsData.value.branchesSummary.find(b => b.id === branch.id)
+              ?.metrics || {};
+
+          return {
+            id: branch.id,
+            name: branch.branchName,
+            status: getStatusFromBranchState(branch.status),
+            currentCustomers: branchMetrics.totalCustomers || 0,
+            capacity: 100, // This could be a property on the branch model in the future
+            queueCount: branchMetrics.totalQueues || 0,
+          };
+        });
+      }
+
+      // Get customer analytics for trends
+      const customerAnalyticsResponse = await getCustomerAnalytics(
+        vendorId,
+        period
+      );
+      if (customerAnalyticsResponse.status === 'success') {
+        const trends = customerAnalyticsResponse.data.metrics.trends || {};
+        customerTrend.value = {
+          percentage: Math.abs(trends.customers || 0).toFixed(1),
+          direction: getTrendDirection(trends.customers || 0),
+        };
+        queueTrend.value = {
+          percentage: Math.abs(trends.queues || 0).toFixed(1),
+          direction: getTrendDirection(trends.queues || 0),
+        };
+      }
+
+      // Get ratings analytics
+      const ratingsAnalyticsResponse = await getRatingsAnalytics(
+        vendorId,
+        period
+      );
+      if (ratingsAnalyticsResponse.status === 'success') {
+        const ratingTrends = ratingsAnalyticsResponse.data.ratings.trends || {};
+        ratingTrend.value = {
+          percentage: Math.abs(ratingTrends.average || 0).toFixed(1),
+          direction: getTrendDirection(ratingTrends.average || 0),
+        };
+      }
+
+      // Update chart data
+      updateChartData(customerAnalyticsResponse.data.metrics.history || {});
+    }
+  } catch (error) {
+    console.error('Error fetching branch data:', error);
+  }
 };
 
 // Fetch data for a specific branch (branch staff)
-const fetchBranchData = async branchId => {
-  // In a real app, this would make API calls
-  console.log(`Fetching data for branch ${branchId}`);
-  // Mock data for now
-  totalCustomers.value = 325;
-  activeQueues.value = 8;
-  averageRating.value = 4.6;
-  branchName.value =
-    branches.find(b => b.id === userStore.branchId)?.name || 'Your';
+const fetchBranchData = async (branchId, period = 'month') => {
+  const vendorId = userStore.user.data.staff.vendorId;
+
+  try {
+    // Get branch specific analytics
+    const customerAnalyticsResponse = await getCustomerAnalytics(
+      vendorId,
+      period,
+      branchId
+    );
+
+    if (customerAnalyticsResponse.status === 'success') {
+      const branchMetrics = customerAnalyticsResponse.data.metrics || {};
+      totalCustomers.value = branchMetrics.totalCustomers || 0;
+      activeQueues.value = branchMetrics.totalQueues || 0;
+
+      const trends = branchMetrics.trends || {};
+      customerTrend.value = {
+        percentage: Math.abs(trends.customers || 0).toFixed(1),
+        direction: getTrendDirection(trends.customers || 0),
+      };
+      queueTrend.value = {
+        percentage: Math.abs(trends.queues || 0).toFixed(1),
+        direction: getTrendDirection(trends.queues || 0),
+      };
+
+      // Update chart data
+      updateChartData(branchMetrics.history || {});
+    }
+
+    // Get ratings analytics for the branch
+    const ratingsAnalyticsResponse = await getRatingsAnalytics(
+      vendorId,
+      period,
+      branchId
+    );
+
+    if (ratingsAnalyticsResponse.status === 'success') {
+      averageRating.value = ratingsAnalyticsResponse.data.ratings.average || 0;
+
+      const ratingTrends = ratingsAnalyticsResponse.data.ratings.trends || {};
+      ratingTrend.value = {
+        percentage: Math.abs(ratingTrends.average || 0).toFixed(1),
+        direction: getTrendDirection(ratingTrends.average || 0),
+      };
+    }
+
+    // Set branch name
+    const branchesResponse = await getBranches(vendorId);
+    if (branchesResponse.status === 'success') {
+      const branch = branchesResponse.data.find(b => b.id === branchId);
+      branchName.value = branch ? branch.branchName : 'Your';
+    }
+  } catch (error) {
+    console.error(`Error fetching data for branch ${branchId}:`, error);
+  }
+};
+
+// Now that the functions are defined, we can watch for period changes
+watchEffect(async () => {
+  if (userStore.user && chartPeriod.value) {
+    try {
+      if (userStore.isRootAccount) {
+        await fetchAllBranchesData(chartPeriod.value);
+      } else if (userStore.branchId) {
+        await fetchBranchData(userStore.branchId, chartPeriod.value);
+      }
+    } catch (error) {
+      console.error('Error updating data for period change:', error);
+    }
+  }
+});
+
+// Helper function to determine trend direction
+const getTrendDirection = value => {
+  if (value > 0) return 'positive';
+  if (value < 0) return 'negative';
+  return 'neutral';
+};
+
+// Helper function to map branch status to UI status
+const getStatusFromBranchState = status => {
+  switch (status) {
+    case 'active':
+      return 'open';
+    case 'inactive':
+      return 'closed';
+    case 'temporary-closed':
+      return 'closed';
+    case 'coming-soon':
+      return 'closed';
+    default:
+      return 'open';
+  }
 };
 
 // Get current date
@@ -240,50 +471,49 @@ const currentDate = computed(() => {
   });
 });
 
-// Chart data
-const chartPeriod = ref('month');
-const monthlyCustomers = {
-  Jan: 420,
-  Feb: 380,
-  Mar: 450,
-  Apr: 400,
-  May: 500,
-  Jun: 550,
-  Jul: 580,
-  Aug: 610,
-  Sep: 650,
-  Oct: 682,
+// Monthly data for chart
+const monthlyCustomers = ref({
+  Jan: 0,
+  Feb: 0,
+  Mar: 0,
+  Apr: 0,
+  May: 0,
+  Jun: 0,
+  Jul: 0,
+  Aug: 0,
+  Sep: 0,
+  Oct: 0,
   Nov: 0,
   Dec: 0,
-};
+});
 
-// Branch data
-const branches = [
-  {
-    id: 'branch1',
-    name: 'Silom Branch',
-    status: 'open',
-    currentCustomers: 32,
-    capacity: 50,
-    queueCount: 12,
-  },
-  {
-    id: 'branch2',
-    name: 'Asoke Branch',
-    status: 'busy',
-    currentCustomers: 45,
-    capacity: 60,
-    queueCount: 28,
-  },
-  {
-    id: 'branch3',
-    name: 'Siam Branch',
-    status: 'closed',
-    currentCustomers: 0,
-    capacity: 40,
-    queueCount: 0,
-  },
-];
+// Update chart data based on period
+const updateChartData = historyData => {
+  // Reset monthly data
+  monthlyCustomers.value = {
+    Jan: 0,
+    Feb: 0,
+    Mar: 0,
+    Apr: 0,
+    May: 0,
+    Jun: 0,
+    Jul: 0,
+    Aug: 0,
+    Sep: 0,
+    Oct: 0,
+    Nov: 0,
+    Dec: 0,
+  };
+
+  // Update with real data if available
+  if (historyData && typeof historyData === 'object') {
+    Object.keys(historyData).forEach(key => {
+      if (Object.prototype.hasOwnProperty.call(monthlyCustomers.value, key)) {
+        monthlyCustomers.value[key] = historyData[key];
+      }
+    });
+  }
+};
 </script>
 
 <style scoped>
@@ -750,5 +980,16 @@ const branches = [
   color: #666;
   font-weight: normal;
   margin-left: 8px;
+}
+
+.loading-container {
+  padding: 40px;
+  text-align: center;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+  color: #718096;
+  font-size: 16px;
 }
 </style>

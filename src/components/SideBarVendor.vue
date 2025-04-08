@@ -1,5 +1,5 @@
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" v-if="!loading">
     <div class="logo">
       <img :src="logoURL" alt="Papdaew" />
     </div>
@@ -47,6 +47,16 @@
       </router-link>
 
       <router-link
+        to="/branch-ratings"
+        class="button"
+        active-class="active"
+        exact-active-class="active"
+      >
+        <Icon icon="material-symbols:star" class="material-icons" />
+        <span class="text">Ratings</span>
+      </router-link>
+
+      <router-link
         to="/support"
         class="button"
         active-class="active"
@@ -78,6 +88,16 @@
             class="material-icons"
           />
           <span class="text">Manage Queue</span>
+        </router-link>
+
+        <router-link
+          to="/all-queues"
+          class="button"
+          active-class="active"
+          exact-active-class="active"
+        >
+          <Icon icon="material-symbols:view-list" class="material-icons" />
+          <span class="text">All Queues</span>
         </router-link>
       </div>
     </div>
@@ -116,11 +136,20 @@
           }}</span>
         </div>
       </div>
-      <router-link to="/login" class="button logout" @click="showLogoutConfirm">
+      <button class="button logout" @click="showLogoutConfirm">
         <Icon icon="tabler:logout-2" class="material-icons" />
         <span class="text">Logout</span>
-      </router-link>
+      </button>
     </div>
+  </aside>
+
+  <!-- Loading state while userStore is being loaded -->
+  <aside v-else class="sidebar sidebar-loading">
+    <div class="logo">
+      <img :src="logoURL" alt="Papdaew" />
+    </div>
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading...</p>
   </aside>
 
   <!-- Logout Confirmation Modal -->
@@ -143,10 +172,10 @@
 <script setup>
 import logoURL from '../assets/logo.png';
 import { Icon } from '@iconify/vue';
-import { logout } from '../lib/api';
+import { logout, getCurrentUser, getBranchById } from '../lib/api';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vue-toast-notification';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useUserStore } from '../stores/counter';
 
 const router = useRouter();
@@ -154,11 +183,12 @@ const $toast = useToast();
 const showLogoutModal = ref(false);
 const userStore = useUserStore();
 const branchName = ref('');
+const loading = ref(true);
 
 // Get user display name and initials
 const userName = computed(() => {
   if (userStore.user) {
-    return userStore.user.name || 'Vendor User';
+    return userStore.user.data.username || 'Vendor User';
   }
   return 'Vendor User';
 });
@@ -174,16 +204,55 @@ const userInitials = computed(() => {
   return 'VU';
 });
 
+// Watch userStore to determine when it's fully loaded
+watch(
+  () => userStore.isAuthenticated,
+  isAuthenticated => {
+    if (isAuthenticated && userStore.user) {
+      loading.value = false;
+    }
+  }
+);
+
 onMounted(async () => {
-  if (userStore.branchId) {
-    // In a real app, fetch the branch name if not available in user object
-    branchName.value = 'Silom Branch'; // For example purposes
+  try {
+    // If user data is not already in store, try to fetch it
+    if (!userStore.user) {
+      const userData = await getCurrentUser();
+      userStore.setUser(userData);
+    }
+
+    // If we have the user data now, set loading to false
+    if (userStore.user) {
+      loading.value = false;
+    }
+
+    if (userStore.branchId) {
+      // In a real app, fetch the branch name if not available in user object
+      // For example, you might want to fetch branch details from an API
+      try {
+        // Here you would fetch branch details using the branchId
+        const branchDetails = await getBranchById(
+          userStore.user.data.staff.vendorId,
+          userStore.user.data.staff.branchId
+        );
+        console.log(branchDetails.data);
+        branchName.value = branchDetails.data.branchName;
+
+        // For now, we'll use a placeholder
+        branchName.value = branchDetails.data.branchName;
+      } catch (error) {
+        console.error('Error fetching branch details:', error);
+        branchName.value = 'Branch #' + userStore.branchId;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error);
+    loading.value = false;
   }
 });
 
-const showLogoutConfirm = event => {
-  // Prevent default navigation
-  if (event) event.preventDefault();
+const showLogoutConfirm = () => {
   showLogoutModal.value = true;
 };
 
@@ -354,6 +423,10 @@ hr {
   border-left: 3px solid transparent;
   transition: all 0.2s ease;
   position: relative;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
 }
 
 .button:hover {
@@ -487,6 +560,33 @@ button {
 
   .button {
     padding: 10px 20px;
+  }
+}
+
+/* Add styles for loading state */
+.sidebar-loading {
+  justify-content: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(107, 144, 128, 0.2);
+  border-radius: 50%;
+  border-top-color: #6b9080;
+  animation: spin 1s linear infinite;
+  margin: 40px 0;
+}
+
+.loading-text {
+  color: #6b9080;
+  font-size: 14px;
+  text-align: center;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

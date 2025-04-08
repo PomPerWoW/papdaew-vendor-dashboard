@@ -5,10 +5,16 @@
         <h1>Branch Management</h1>
         <p class="description">Manage your restaurant locations and branches</p>
       </div>
-      <button @click="showModal = true" class="add-button">
-        <Icon icon="material-symbols:add" width="20" height="20" />
-        <span>Add Branch</span>
-      </button>
+      <div class="button-group">
+        <button @click="addBranchStaff" class="staff-button">
+          <Icon icon="material-symbols:person-add" width="20" height="20" />
+          <span>Add Staff</span>
+        </button>
+        <button @click="showModal = true" class="add-button">
+          <Icon icon="material-symbols:add" width="20" height="20" />
+          <span>Add Branch</span>
+        </button>
+      </div>
     </div>
 
     <div class="filter-container">
@@ -40,17 +46,22 @@
       </div>
     </div>
 
-    <p v-if="filteredBranches.length === 0" class="no-results">
+    <div v-if="loading" class="loading-state">
+      <p>Loading branches...</p>
+    </div>
+
+    <p v-else-if="filteredBranches.length === 0" class="no-results">
       No branches found. Try changing your search criteria or add a new branch.
     </p>
 
     <div class="grid-layout" v-else>
       <BranchCard
         v-for="(branch, index) in filteredBranches"
-        :key="index"
+        :key="branch.id || index"
         :branch="branch"
         @edit="editBranch"
         @delete="confirmDelete"
+        @add-staff="addStaffToBranch"
       />
     </div>
 
@@ -62,27 +73,39 @@
 
     <ConfirmDialog
       v-model:visible="showDeleteConfirm"
-      :message="`Are you sure you want to delete '${branchToDelete?.name}'?`"
+      :message="`Are you sure you want to delete '${branchToDelete?.branchName}'?`"
       @confirm="deleteBranch"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useToast } from 'vue-toast-notification';
 import { Icon } from '@iconify/vue';
+import { useRouter } from 'vue-router';
 import BranchCard from '@/components/BranchCard.vue';
 import AddBranch from '@/components/AddBranch.vue';
 import Dropdown from 'primevue/dropdown';
 import ConfirmDialog from 'primevue/confirmdialog';
+import {
+  addBranch,
+  getBranches,
+  getCurrentUser,
+  createLocation,
+} from '@/lib/api';
 
+const router = useRouter();
 const toast = useToast();
 const showModal = ref(false);
 const searchQuery = ref('');
 const selectedType = ref(null);
 const showDeleteConfirm = ref(false);
 const branchToDelete = ref(null);
+const loading = ref(true);
+const branches = ref([]);
+const currentUser = ref(null);
+const vendorId = ref(null);
 
 // Branch types for filtering
 const branchTypes = [
@@ -93,61 +116,51 @@ const branchTypes = [
   { label: 'Flagship Store', value: 'flagship' },
 ];
 
-// Demo data - in a real app, this would come from an API
-const branches = ref([
-  {
-    id: 1,
-    name: 'Downtown Branch',
-    type: 'main',
-    typeLabel: 'Main Branch',
-    manager: 'John Doe',
-    email: 'downtown@example.com',
-    phone: '+66 123 456 789',
-    address: '123 Main Street, Lat Phrao, Bangkok 10230, Thailand',
-    hours: '9:00 AM - 9:00 PM',
-    image:
-      'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=800&auto=format&fit=crop&q=60',
-  },
-  {
-    id: 2,
-    name: 'Sukhumvit Branch',
-    type: 'sub',
-    typeLabel: 'Sub Branch',
-    manager: 'Jane Smith',
-    email: 'sukhumvit@example.com',
-    phone: '+66 234 567 890',
-    address: '456 Sukhumvit Road, Khlong Toei, Bangkok 10110, Thailand',
-    hours: '10:00 AM - 10:00 PM',
-    image:
-      'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&auto=format&fit=crop&q=60',
-  },
-  {
-    id: 3,
-    name: 'Central World Kiosk',
-    type: 'kiosk',
-    typeLabel: 'Kiosk',
-    manager: 'Sam Wilson',
-    email: 'centralworld@example.com',
-    phone: '+66 345 678 901',
-    address: 'Central World, 4th Floor, Pathum Wan, Bangkok 10330, Thailand',
-    hours: '10:00 AM - 9:00 PM',
-    image:
-      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&auto=format&fit=crop&q=60',
-  },
-  {
-    id: 4,
-    name: 'Siam Paragon Flagship',
-    type: 'flagship',
-    typeLabel: 'Flagship Store',
-    manager: 'Lisa Brown',
-    email: 'siamparagon@example.com',
-    phone: '+66 456 789 012',
-    address: 'Siam Paragon, G Floor, Pathum Wan, Bangkok 10330, Thailand',
-    hours: '10:00 AM - 10:00 PM',
-    image:
-      'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&auto=format&fit=crop&q=60',
-  },
-]);
+// Load branches when component mounts
+onMounted(async () => {
+  try {
+    // Get current user and vendor information
+    const userResponse = await getCurrentUser();
+    currentUser.value = userResponse.data;
+
+    if (currentUser.value && currentUser.value.staff) {
+      vendorId.value = currentUser.value.staff.vendorId;
+
+      // Fetch branches for this vendor
+      await fetchBranches();
+    } else {
+      toast.error('No vendor information found for current user');
+      loading.value = false;
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error);
+    toast.error('Failed to load user data');
+    loading.value = false;
+  }
+});
+
+// Fetch branches from API
+const fetchBranches = async () => {
+  try {
+    loading.value = true;
+
+    if (vendorId.value) {
+      // Call the API to get branches
+      const response = await getBranches(vendorId.value);
+      branches.value = response.data;
+    } else {
+      toast.error('Vendor ID is missing');
+      branches.value = [];
+    }
+
+    loading.value = false;
+  } catch (error) {
+    console.error('Error fetching branches:', error);
+    toast.error('Failed to load branches');
+    loading.value = false;
+    branches.value = [];
+  }
+};
 
 // Filter branches based on search query and selected type
 const filteredBranches = computed(() => {
@@ -157,9 +170,9 @@ const filteredBranches = computed(() => {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(
       branch =>
-        branch.name.toLowerCase().includes(query) ||
-        branch.manager.toLowerCase().includes(query) ||
-        branch.address.toLowerCase().includes(query)
+        branch.branchName.toLowerCase().includes(query) ||
+        branch.manager?.toLowerCase().includes(query) ||
+        branch.address?.toLowerCase().includes(query)
     );
   }
 
@@ -182,21 +195,91 @@ const clearFilters = () => {
 };
 
 // Branch CRUD operations
-const onBranchAdded = branch => {
-  // In a real app, this would be an API call followed by a refresh
-  const newBranch = {
-    id: branches.value.length + 1,
-    ...branch,
-    typeLabel:
-      branchTypes.find(t => t.value === branch.type)?.label || branch.type,
-  };
-  branches.value.push(newBranch);
-  toast.success(`${branch.name} has been added successfully!`);
+const onBranchAdded = async branch => {
+  try {
+    loading.value = true;
+    console.log('Adding branch with data:', branch);
+
+    let locationId = branch.locationId;
+
+    // If we need to create a location first (address is provided but locationId is a placeholder)
+    if (
+      branch.addressLine1 &&
+      (!locationId || locationId === '000000000000000000000000')
+    ) {
+      // Create location data object with proper structure
+      const locationData = {
+        name: branch.name, // Use branch name as location name
+        addressLine1: branch.addressLine1,
+        addressLine2: branch.addressLine2 || '',
+        district: branch.district || 'Unknown District',
+        subdistrict: branch.subdistrict || 'Unknown Subdistrict',
+        province: branch.province || 'Bangkok',
+        postalCode: branch.postalCode || '10000',
+        country: 'Thailand',
+        type: 'STANDALONE',
+        coordinates: {
+          latitude: 13.7563, // Default Bangkok coordinates
+          longitude: 100.5018,
+        },
+      };
+
+      console.log('Creating location with data:', locationData);
+
+      // Create the location
+      try {
+        const locationResponse = await createLocation(locationData);
+        locationId = locationResponse.data.id;
+        console.log('Location created successfully with ID:', locationId);
+        toast.success(`Location created successfully`);
+      } catch (error) {
+        console.error('Error creating location:', error);
+        toast.error('Failed to create location. Using placeholder ID.');
+        // Continue with placeholder ID if location creation fails
+      }
+    }
+
+    // Prepare branch data according to API requirements
+    const branchData = {
+      branchName: branch.name,
+      branchCode:
+        branch.branchCode ||
+        branch.name.substring(0, 3).toUpperCase() +
+          Math.floor(Math.random() * 1000),
+      locationId: locationId,
+      contactPhone: branch.phone,
+      contactEmail: branch.email,
+      branchManager: branch.manager,
+      businessHours: branch.businessHours,
+      status: branch.status || 'active',
+    };
+
+    console.log('Sending branch data to API:', branchData);
+
+    if (vendorId.value) {
+      // Call the API to add a branch
+      const response = await addBranch(vendorId.value, branchData);
+      console.log('Branch added successfully, response:', response.data);
+
+      // Add the new branch to the list with the returned data
+      branches.value.push(response.data);
+
+      toast.success(`${branch.name} has been added successfully!`);
+    } else {
+      toast.error('Vendor ID is missing');
+    }
+
+    loading.value = false;
+  } catch (error) {
+    console.error('Error adding branch:', error);
+    toast.error(error.response?.data?.message || 'Failed to add branch');
+    loading.value = false;
+  }
 };
 
 const editBranch = branch => {
   // In a real app, this would open an edit modal
-  toast.info(`Editing ${branch.name}`);
+  toast.info(`Editing ${branch.branchName}`);
 };
 
 const confirmDelete = branch => {
@@ -209,8 +292,40 @@ const deleteBranch = () => {
 
   // In a real app, this would be an API call
   branches.value = branches.value.filter(b => b.id !== branchToDelete.value.id);
-  toast.success(`${branchToDelete.value.name} has been deleted successfully!`);
+  toast.success(
+    `${branchToDelete.value.branchName} has been deleted successfully!`
+  );
   branchToDelete.value = null;
+};
+
+// Add function to navigate to branch staff signup
+const addBranchStaff = () => {
+  if (branches.value.length === 0) {
+    toast.error('You need to create at least one branch first');
+    return;
+  }
+
+  // For simplicity, we'll use the first branch as the default
+  // In a real app, you might want to show a dialog to select which branch
+  const defaultBranch = branches.value[0];
+
+  router.push({
+    path: '/branch-staff-signup',
+    query: { branchId: defaultBranch.id },
+  });
+};
+
+// Function to navigate to staff signup for a specific branch
+const addStaffToBranch = branch => {
+  if (!branch || !branch.id) {
+    toast.error('Invalid branch selected');
+    return;
+  }
+
+  router.push({
+    path: '/branch-staff-signup',
+    query: { branchId: branch.id },
+  });
 };
 </script>
 
@@ -226,6 +341,11 @@ const deleteBranch = () => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+}
+
+.button-group {
+  display: flex;
+  gap: 10px;
 }
 
 .header-content h1 {
@@ -258,6 +378,25 @@ const deleteBranch = () => {
 
 .add-button:hover {
   background-color: #5a7b6c;
+}
+
+.staff-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #4a6fa5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.staff-button:hover {
+  background-color: #3c5a84;
 }
 
 .filter-container {
@@ -345,6 +484,15 @@ const deleteBranch = () => {
   margin-top: 16px;
 }
 
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
 @media (max-width: 768px) {
   .main {
     padding: 20px;
@@ -356,7 +504,13 @@ const deleteBranch = () => {
     gap: 16px;
   }
 
-  .add-button {
+  .button-group {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .add-button,
+  .staff-button {
     width: 100%;
     justify-content: center;
   }

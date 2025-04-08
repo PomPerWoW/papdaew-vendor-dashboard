@@ -6,6 +6,16 @@
         <p class="description">View and manage your customer information</p>
       </div>
       <div class="header-actions">
+        <div class="period-selector">
+          <button
+            v-for="period in ['day', 'week', 'month', 'year']"
+            :key="period"
+            :class="['period-button', { active: selectedPeriod === period }]"
+            @click="changePeriod(period)"
+          >
+            {{ period.charAt(0).toUpperCase() + period.slice(1) }}
+          </button>
+        </div>
         <button class="export-button">
           <Icon icon="material-symbols:download" />
           <span>Export List</span>
@@ -13,180 +23,433 @@
       </div>
     </div>
 
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <div class="metric-content">
-          <div class="metric-info">
-            <h3>Total Customers</h3>
-            <p class="metric-value">1,432</p>
-            <p class="metric-trend positive">
-              <Icon icon="material-symbols:trending-up" />
-              <span>12% from last month</span>
-            </p>
-          </div>
-          <div class="metric-icon">
-            <Icon icon="material-symbols:group" />
-          </div>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-content">
-          <div class="metric-info">
-            <h3>New Customers</h3>
-            <p class="metric-value">86</p>
-            <p class="metric-trend positive">
-              <Icon icon="material-symbols:trending-up" />
-              <span>8% from last month</span>
-            </p>
-          </div>
-          <div class="metric-icon">
-            <Icon icon="material-symbols:person-add" />
-          </div>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-content">
-          <div class="metric-info">
-            <h3>Active Customers</h3>
-            <p class="metric-value">967</p>
-            <p class="metric-trend neutral">
-              <Icon icon="material-symbols:trending-flat" />
-              <span>Same as last month</span>
-            </p>
-          </div>
-          <div class="metric-icon">
-            <Icon icon="material-symbols:person-check" />
-          </div>
-        </div>
-      </div>
-
-      <div class="metric-card">
-        <div class="metric-content">
-          <div class="metric-info">
-            <h3>Avg. Retention</h3>
-            <p class="metric-value">78%</p>
-            <p class="metric-trend positive">
-              <Icon icon="material-symbols:trending-up" />
-              <span>5% from last month</span>
-            </p>
-          </div>
-          <div class="metric-icon">
-            <Icon icon="material-symbols:autorenew" />
-          </div>
-        </div>
-      </div>
+    <div v-if="loading" class="loading-state">
+      <p>Loading customer data...</p>
     </div>
 
-    <div class="card data-card">
-      <div class="card-header">
-        <div>
-          <h2>Customer List</h2>
-          <p class="card-description">Manage all your registered customers</p>
+    <div v-else>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-info">
+              <h3>Total Customers</h3>
+              <p class="metric-value">{{ totalCustomers.toLocaleString() }}</p>
+              <p class="metric-trend" :class="customerTrend.direction">
+                <Icon
+                  :icon="
+                    'material-symbols:trending-' +
+                    (customerTrend.direction === 'neutral'
+                      ? 'flat'
+                      : customerTrend.direction === 'positive'
+                        ? 'up'
+                        : 'down')
+                  "
+                />
+                <span
+                  >{{ customerTrend.percentage }}% from last
+                  {{ selectedPeriod }}</span
+                >
+              </p>
+            </div>
+            <div class="metric-icon">
+              <Icon icon="material-symbols:group" />
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-info">
+              <h3>New Customers</h3>
+              <p class="metric-value">{{ newCustomers.toLocaleString() }}</p>
+              <p class="metric-trend" :class="newCustomerTrend.direction">
+                <Icon
+                  :icon="
+                    'material-symbols:trending-' +
+                    (newCustomerTrend.direction === 'neutral'
+                      ? 'flat'
+                      : newCustomerTrend.direction === 'positive'
+                        ? 'up'
+                        : 'down')
+                  "
+                />
+                <span
+                  >{{ newCustomerTrend.percentage }}% from last
+                  {{ selectedPeriod }}</span
+                >
+              </p>
+            </div>
+            <div class="metric-icon">
+              <Icon icon="material-symbols:person-add" />
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-info">
+              <h3>Active Customers</h3>
+              <p class="metric-value">{{ activeCustomers.toLocaleString() }}</p>
+              <p class="metric-trend" :class="activeCustomerTrend.direction">
+                <Icon
+                  :icon="
+                    'material-symbols:trending-' +
+                    (activeCustomerTrend.direction === 'neutral'
+                      ? 'flat'
+                      : activeCustomerTrend.direction === 'positive'
+                        ? 'up'
+                        : 'down')
+                  "
+                />
+                <span
+                  >{{ activeCustomerTrend.percentage }}% from last
+                  {{ selectedPeriod }}</span
+                >
+              </p>
+            </div>
+            <div class="metric-icon">
+              <Icon icon="material-symbols:person-check" />
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-content">
+            <div class="metric-info">
+              <h3>Avg. Retention</h3>
+              <p class="metric-value">{{ retentionRate }}%</p>
+              <p class="metric-trend" :class="retentionTrend.direction">
+                <Icon
+                  :icon="
+                    'material-symbols:trending-' +
+                    (retentionTrend.direction === 'neutral'
+                      ? 'flat'
+                      : retentionTrend.direction === 'positive'
+                        ? 'up'
+                        : 'down')
+                  "
+                />
+                <span
+                  >{{ retentionTrend.percentage }}% from last
+                  {{ selectedPeriod }}</span
+                >
+              </p>
+            </div>
+            <div class="metric-icon">
+              <Icon icon="material-symbols:autorenew" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="table-container">
-        <DataTable
-          :value="customers"
-          paginator
-          :rows="10"
-          dataKey="id"
-          :loading="loading"
-          class="customer-table"
-        >
-          <template #header>
-            <div class="table-header">
-              <div class="search-container">
-                <span class="p-input-icon-left">
-                  <i class="pi pi-search" />
-                  <InputText placeholder="Search customers..." />
-                </span>
-              </div>
-            </div>
-          </template>
-          <template #empty> No customers found. </template>
-          <template #loading>
-            <!-- Empty template to show nothing when loading -->
-          </template>
-          <Column field="name" header="Name" style="min-width: 12rem">
-            <template #body="{ data }">
-              <div class="customer-name">{{ data.name }}</div>
-            </template>
-          </Column>
-          <Column header="Phone Number" style="min-width: 12rem">
-            <template #body="{ data }">
-              <div class="customer-phone">{{ data.phone }}</div>
-            </template>
-          </Column>
-          <Column header="Branch" style="min-width: 14rem">
-            <template #body="{ data }">
-              <div class="customer-branch">{{ data.branch.name }}</div>
-            </template>
-          </Column>
-          <Column field="queue" header="Queue" style="min-width: 12rem">
-            <template #body="{ data }">
-              <div class="customer-queue">{{ data.queue }}</div>
-            </template>
-          </Column>
-          <Column field="status" header="Status" style="min-width: 12rem">
-            <template #body="{ data }">
-              <Tag
-                :value="data.status"
-                :severity="getSeverity(data.status)"
-                class="status-tag"
-              />
-            </template>
-          </Column>
-          <Column
-            field="verified"
-            header="Verified"
-            dataType="boolean"
-            style="min-width: 6rem"
+      <div class="card data-card">
+        <div class="card-header">
+          <div>
+            <h2>Customer List</h2>
+            <p class="card-description">Manage all your registered customers</p>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <DataTable
+            :value="filteredCustomers"
+            paginator
+            :rows="10"
+            dataKey="id"
+            :loading="loading"
+            class="customer-table"
           >
-            <template #body="{ data }">
-              <i
-                class="verification-icon pi"
-                :class="{
-                  'pi-check-circle verified': data.verified,
-                  'pi-times-circle not-verified': !data.verified,
-                }"
-              ></i>
-            </template>
-          </Column>
-          <Column
-            header="Actions"
-            style="min-width: 6rem"
-            headerClass="action-header"
-          >
-            <template #body>
-              <div class="action-buttons">
-                <button class="action-btn view-btn">
-                  <i class="pi pi-eye"></i>
-                </button>
-                <button class="action-btn edit-btn">
-                  <i class="pi pi-pencil"></i>
-                </button>
+            <template #header>
+              <div class="table-header">
+                <div class="search-container">
+                  <span class="p-input-icon-left">
+                    <i class="pi pi-search" />
+                    <InputText
+                      v-model="searchTerm"
+                      placeholder="Search customers..."
+                    />
+                  </span>
+                </div>
               </div>
             </template>
-          </Column>
-        </DataTable>
+            <template #empty> No customers found. </template>
+            <template #loading>
+              <!-- Empty template to show nothing when loading -->
+            </template>
+            <Column field="name" header="Name" style="min-width: 12rem">
+              <template #body="{ data }">
+                <div class="customer-name">{{ data.name }}</div>
+              </template>
+            </Column>
+            <Column header="Phone Number" style="min-width: 12rem">
+              <template #body="{ data }">
+                <div class="customer-phone">{{ data.phone }}</div>
+              </template>
+            </Column>
+            <Column header="Branch" style="min-width: 14rem">
+              <template #body="{ data }">
+                <div class="customer-branch">{{ data.branch.name }}</div>
+              </template>
+            </Column>
+            <Column field="queue" header="Queue" style="min-width: 12rem">
+              <template #body="{ data }">
+                <div class="customer-queue">{{ data.queue }}</div>
+              </template>
+            </Column>
+            <Column field="status" header="Status" style="min-width: 12rem">
+              <template #body="{ data }">
+                <Tag
+                  :value="data.status"
+                  :severity="getSeverity(data.status)"
+                  class="status-tag"
+                />
+              </template>
+            </Column>
+            <Column
+              field="verified"
+              header="Verified"
+              dataType="boolean"
+              style="min-width: 6rem"
+            >
+              <template #body="{ data }">
+                <i
+                  class="verification-icon pi"
+                  :class="{
+                    'pi-check-circle verified': data.verified,
+                    'pi-times-circle not-verified': !data.verified,
+                  }"
+                ></i>
+              </template>
+            </Column>
+            <Column
+              header="Actions"
+              style="min-width: 6rem"
+              headerClass="action-header"
+            >
+              <template #body>
+                <div class="action-buttons">
+                  <button class="action-btn view-btn">
+                    <i class="pi pi-eye"></i>
+                  </button>
+                  <button class="action-btn edit-btn">
+                    <i class="pi pi-pencil"></i>
+                  </button>
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Icon } from '@iconify/vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 import InputText from 'primevue/inputtext';
+import { useUserStore } from '../stores/counter';
+import { useToast } from 'vue-toast-notification';
+import {
+  getCustomerAnalytics,
+  getBranches,
+  getQueuesByBranch,
+} from '../lib/api';
+
+// User store for user/vendor info
+const userStore = useUserStore();
+const $toast = useToast();
+
+// Vendor ID from the user store
+const vendorId = computed(() => userStore.user?.data?.staff?.vendorId);
+const branchId = computed(() => userStore.branchId);
 
 const customers = ref([]);
 const loading = ref(true);
+const searchTerm = ref('');
+const totalCustomers = ref(0);
+const newCustomers = ref(0);
+const activeCustomers = ref(0);
+const retentionRate = ref(0);
+const customerTrend = ref({
+  percentage: '0',
+  direction: 'neutral',
+});
+const newCustomerTrend = ref({
+  percentage: '0',
+  direction: 'neutral',
+});
+const activeCustomerTrend = ref({
+  percentage: '0',
+  direction: 'neutral',
+});
+const retentionTrend = ref({
+  percentage: '0',
+  direction: 'neutral',
+});
+const selectedPeriod = ref('month');
+const branches = ref([]);
+
+// Initialize data on component mounted
+onMounted(async () => {
+  if (!vendorId.value) {
+    console.error('No vendor ID available');
+    $toast.error('User information not available');
+    return;
+  }
+
+  try {
+    // Load branches first
+    await loadBranches();
+
+    // Then load customer data
+    await loadCustomerAnalytics();
+  } catch (error) {
+    console.error('Error initializing customer view:', error);
+    $toast.error('Failed to initialize customer data');
+  }
+});
+
+// Load customer analytics data
+const loadCustomerAnalytics = async () => {
+  try {
+    loading.value = true;
+
+    // Get customer analytics from the API
+    const analyticsResponse = await getCustomerAnalytics(
+      vendorId.value,
+      selectedPeriod.value,
+      branchId.value
+    );
+
+    if (analyticsResponse.status === 'success') {
+      const data = analyticsResponse.data.metrics;
+
+      // Update metrics with real data
+      totalCustomers.value = data.totalCustomers || 0;
+      newCustomers.value = data.newCustomers || 0;
+      activeCustomers.value = data.activeCustomers || 0;
+      retentionRate.value = data.retentionRate || 0;
+
+      // Update trends with real data
+      const trends = data.trends || {};
+      customerTrend.value = {
+        percentage: Math.abs(trends.totalCustomers || 0).toFixed(1),
+        direction: getTrendDirection(trends.totalCustomers || 0),
+      };
+
+      newCustomerTrend.value = {
+        percentage: Math.abs(trends.newCustomers || 0).toFixed(1),
+        direction: getTrendDirection(trends.newCustomers || 0),
+      };
+
+      activeCustomerTrend.value = {
+        percentage: Math.abs(trends.activeCustomers || 0).toFixed(1),
+        direction: getTrendDirection(trends.activeCustomers || 0),
+      };
+
+      retentionTrend.value = {
+        percentage: Math.abs(trends.retention || 0).toFixed(1),
+        direction: getTrendDirection(trends.retention || 0),
+      };
+
+      // Get customer list from API if available, otherwise use fallback data
+      if (data.customers && Array.isArray(data.customers)) {
+        customers.value = processCustomerData(data.customers);
+      } else {
+        console.warn('No customer data received from API, using fallback data');
+        // Only use fallback in development
+        customers.value = import.meta.env.DEV ? mockCustomers : [];
+      }
+    }
+  } catch (error) {
+    console.error('Error loading customer analytics:', error);
+    $toast.error('Failed to load customer data');
+    // Fallback to mock data in development mode only
+    if (import.meta.env.DEV) {
+      totalCustomers.value = 3500;
+      newCustomers.value = 350;
+      activeCustomers.value = 2800;
+      retentionRate.value = 84;
+      customers.value = mockCustomers;
+
+      customerTrend.value = { percentage: '5.2', direction: 'positive' };
+      newCustomerTrend.value = { percentage: '12.5', direction: 'positive' };
+      activeCustomerTrend.value = { percentage: '3.7', direction: 'positive' };
+      retentionTrend.value = { percentage: '0.8', direction: 'positive' };
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Process customer data from API
+const processCustomerData = apiCustomers => {
+  return apiCustomers.map(customer => {
+    return {
+      id: customer.id || `cust-${Math.random().toString(36).substr(2, 9)}`,
+      name: customer.name || 'Unknown Customer',
+      phone: customer.phone || 'N/A',
+      date: customer.joinDate || new Date().toISOString().split('T')[0],
+      status: mapCustomerStatus(customer.status),
+      verified: customer.verified || false,
+      branch: {
+        name: getBranchNameById(customer.branchId) || 'Main Branch',
+        id: customer.branchId,
+      },
+      queue: customer.queueNumber || '-',
+      branchId: customer.branchId,
+      lastVisit: customer.lastVisit || null,
+      visitCount: customer.visitCount || 0,
+    };
+  });
+};
+
+// Load branches data
+const loadBranches = async () => {
+  try {
+    const branchesResponse = await getBranches(vendorId.value);
+    if (branchesResponse.status === 'success') {
+      branches.value = branchesResponse.data;
+    }
+  } catch (error) {
+    console.error('Error loading branches:', error);
+  }
+};
+
+// Get branch name by ID
+const getBranchNameById = branchId => {
+  const branch = branches.value.find(b => b.id === branchId);
+  return branch ? branch.branchName : 'Unknown Branch';
+};
+
+// Map API customer status to UI status
+const mapCustomerStatus = status => {
+  if (!status) return 'Inactive';
+
+  switch (status.toLowerCase()) {
+    case 'active':
+      return 'Active';
+    case 'new':
+      return 'New';
+    case 'inactive':
+      return 'Inactive';
+    case 'blacklisted':
+      return 'Blacklist';
+    default:
+      return 'Inactive';
+  }
+};
+
+// Helper function to determine trend direction
+const getTrendDirection = value => {
+  if (value > 0) return 'positive';
+  if (value < 0) return 'negative';
+  return 'neutral';
+};
 
 const getSeverity = status => {
   switch (status) {
@@ -203,13 +466,13 @@ const getSeverity = status => {
   }
 };
 
-onMounted(() => {
-  setTimeout(() => {
-    customers.value = mockCustomers;
-    loading.value = false;
-  }, 1000);
-});
+// Change period and reload data
+const changePeriod = async period => {
+  selectedPeriod.value = period;
+  await loadCustomerAnalytics();
+};
 
+// Mock customer data as fallback
 const mockCustomers = [
   {
     id: 1000,
@@ -296,6 +559,22 @@ const mockCustomers = [
     queue: 'C017',
   },
 ];
+
+// Filtered customers computed property
+const filteredCustomers = computed(() => {
+  if (!searchTerm.value.trim()) {
+    return customers.value;
+  }
+
+  const term = searchTerm.value.toLowerCase();
+  return customers.value.filter(
+    customer =>
+      customer.name.toLowerCase().includes(term) ||
+      customer.phone.toLowerCase().includes(term) ||
+      customer.branch.name.toLowerCase().includes(term) ||
+      (customer.queue && customer.queue.toLowerCase().includes(term))
+  );
+});
 </script>
 
 <style scoped>
@@ -618,6 +897,63 @@ const mockCustomers = [
   .export-button {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* New styles for period selector */
+.period-selector {
+  display: flex;
+  gap: 8px;
+  margin-right: 16px;
+}
+
+.period-button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background-color: white;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-button:hover {
+  background-color: #f5f5f5;
+}
+
+.period-button.active {
+  background-color: #6b9080;
+  color: white;
+  border-color: #6b9080;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.loading-state {
+  padding: 40px;
+  text-align: center;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  color: #718096;
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .period-selector {
+    margin-right: 0;
+    justify-content: space-between;
   }
 }
 </style>

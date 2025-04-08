@@ -3,6 +3,49 @@
     <div class="queue-header">
       <h1>Queue Management</h1>
       <p v-if="branchName" class="branch-name">{{ branchName }} Branch</p>
+
+      <!-- Add queue selector dropdown -->
+      <div
+        class="queue-selector"
+        v-if="
+          userStore.isStaff && userStore.branchId && !userStore.isRootAccount
+        "
+      >
+        <div class="queue-selection-row">
+          <div class="queue-dropdown">
+            <label for="queue-select">Select Queue:</label>
+            <select
+              id="queue-select"
+              v-model="selectedQueueId"
+              @change="handleQueueChange"
+              :disabled="isLoading"
+            >
+              <option disabled value="">Select a queue to manage</option>
+              <option v-for="queue in queues" :key="queue.id" :value="queue.id">
+                {{ queue.name }}
+              </option>
+            </select>
+            <button
+              @click="refreshQueues"
+              class="refresh-btn"
+              :disabled="isLoading"
+              title="Refresh Queues"
+            >
+              <Icon icon="material-symbols:refresh" />
+            </button>
+          </div>
+          <button
+            @click="showCreateQueueModal = true"
+            class="create-btn"
+            :disabled="isLoading"
+            title="Create New Queue"
+          >
+            <Icon icon="material-symbols:add" />
+            New Queue
+          </button>
+        </div>
+      </div>
+
       <div
         v-if="
           !userStore.isStaff || !userStore.branchId || userStore.isRootAccount
@@ -27,7 +70,7 @@
       <div class="queue-stats-section">
         <div class="stat-card">
           <div class="stat-icon">
-            <Icon icon="material-symbols:people" />
+            <Icon icon="mdi:account-multiple" />
           </div>
           <div class="stat-content">
             <span class="stat-value">{{ customersServedToday }}</span>
@@ -156,62 +199,50 @@
                 <span class="queue-number">{{ queue.queueNumber }}</span>
                 <div class="queue-info">
                   <span class="customer-name">{{ queue.customerName }}</span>
-                  <span class="wait-time"
-                    >Waiting: {{ formatWaitTime(queue.createdAt) }}</span
-                  >
+                  <div class="queue-details">
+                    <span class="wait-time">
+                      <Icon
+                        icon="material-symbols:timer-outline"
+                        class="info-icon"
+                      />
+                      Waiting: {{ formatWaitTime(queue.createdAt) }}
+                    </span>
+                    <span class="party-size">
+                      <Icon icon="material-symbols:group" class="info-icon" />
+                      Party: {{ queue.partySize }}
+                      {{ queue.partySize === 1 ? 'person' : 'people' }}
+                    </span>
+                    <span class="est-time">
+                      <Icon
+                        icon="material-symbols:schedule"
+                        class="info-icon"
+                      />
+                      Est. wait:
+                      {{
+                        queue.estimatedWaitTime ||
+                        Math.round(averageWaitTime.value)
+                      }}
+                      min
+                    </span>
+                  </div>
                 </div>
-                <button @click="callQueue(queue.queueNumber)" class="call-btn">
-                  <Icon icon="material-symbols:call" />
-                  Call
-                </button>
+                <div class="queue-actions">
+                  <button
+                    @click="callQueue(queue.queueNumber)"
+                    class="call-btn"
+                  >
+                    <Icon icon="material-symbols:call" />
+                    Call
+                  </button>
+                  <button
+                    @click="cancelWaitingCustomer(queue.id, queue.queueNumber)"
+                    class="cancel-wait-btn"
+                  >
+                    <Icon icon="material-symbols:close" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-
-          <!-- Add Customer to Queue -->
-          <div class="add-queue-section">
-            <h2>Add New Customer</h2>
-            <form @submit.prevent="addCustomerToQueue" class="add-queue-form">
-              <div class="form-group">
-                <label for="customerName">Customer Name</label>
-                <input
-                  id="customerName"
-                  v-model="newCustomer.name"
-                  type="text"
-                  placeholder="Enter customer name"
-                  required
-                />
-              </div>
-              <div class="form-group">
-                <label for="customerPhone">Phone Number (optional)</label>
-                <input
-                  id="customerPhone"
-                  v-model="newCustomer.phone"
-                  type="tel"
-                  placeholder="Enter phone number"
-                />
-              </div>
-              <div class="form-group">
-                <label for="partySize">Party Size</label>
-                <select id="partySize" v-model="newCustomer.partySize">
-                  <option value="1">1 person</option>
-                  <option value="2">2 people</option>
-                  <option value="3">3 people</option>
-                  <option value="4">4 people</option>
-                  <option value="5">5 people</option>
-                  <option value="6">6 people</option>
-                  <option value="7">7+ people</option>
-                </select>
-              </div>
-              <button
-                type="submit"
-                class="add-customer-btn"
-                :disabled="isLoading"
-              >
-                <Icon icon="material-symbols:add" />
-                Add to Queue
-              </button>
-            </form>
           </div>
         </div>
 
@@ -258,6 +289,62 @@
         </div>
       </div>
     </div>
+
+    <!-- Create Queue Modal -->
+    <div
+      class="modal-overlay"
+      v-if="showCreateQueueModal"
+      @click="showCreateQueueModal = false"
+    >
+      <div class="modal-content" @click.stop>
+        <h2>Create New Queue</h2>
+        <div class="modal-form">
+          <div class="form-group">
+            <label for="queueName">Queue Name</label>
+            <input
+              id="queueName"
+              v-model="newQueue.name"
+              type="text"
+              placeholder="e.g., Main Counter, Fast Track, VIP"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="queueDescription">Description (optional)</label>
+            <textarea
+              id="queueDescription"
+              v-model="newQueue.description"
+              placeholder="Brief description of this queue"
+              rows="3"
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="queueStatus">Initial Status</label>
+            <select id="queueStatus" v-model="newQueue.status">
+              <option value="active">Active</option>
+              <option value="paused">Paused</option>
+            </select>
+          </div>
+          <div class="form-actions">
+            <button
+              class="cancel-btn"
+              @click="showCreateQueueModal = false"
+              :disabled="isCreatingQueue"
+            >
+              Cancel
+            </button>
+            <button
+              class="create-btn"
+              @click="createNewQueue"
+              :disabled="!newQueue.name || isCreatingQueue"
+            >
+              <Icon icon="material-symbols:add" />
+              Create Queue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -266,15 +353,25 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useToast } from 'vue-toast-notification';
 import { Icon } from '@iconify/vue';
 import { useUserStore } from '../stores/counter';
+import {
+  getQueuesByVendor,
+  getQueueStatus,
+  updateQueue,
+  dequeueCustomer,
+  createQueue,
+  exitQueue,
+} from '../lib/api';
 
 const $toast = useToast();
 const userStore = useUserStore();
 
-// Branch information
-const branchId = computed(() => userStore.branchId);
+// Branch ID from the user store (for branch staff)
+const vendorId = computed(() => userStore.user?.data?.staff?.vendorId);
 const branchName = ref('');
 
 // Queue state
+const selectedQueueId = ref('');
+const queues = ref([]);
 const currentQueue = ref(null);
 const isActive = ref(false);
 const queueStatus = computed(() => {
@@ -285,63 +382,31 @@ const queueStatusClass = computed(() => {
   return isActive.value ? 'active' : 'paused';
 });
 const waitingQueues = ref([]);
-const newCustomer = ref({
-  name: '',
-  phone: '',
-  partySize: '2',
-});
 const isLoading = ref(false);
 
 // Queue statistics
-const customersServedToday = ref(28);
-const averageWaitTime = ref(12);
-const queueEfficiency = ref(87);
+const customersServedToday = ref(0);
+const averageWaitTime = ref(0);
+const queueEfficiency = ref(0);
 const activeTab = ref('current');
 
 // Queue history
-const queueHistory = ref([
-  {
-    date: new Date(Date.now() - 15 * 60000),
-    queueNumber: 'C010',
-    customerName: 'Alice Johnson',
-    waitTime: 8,
-    status: 'completed',
-  },
-  {
-    date: new Date(Date.now() - 25 * 60000),
-    queueNumber: 'C009',
-    customerName: 'David Lee',
-    waitTime: 15,
-    status: 'completed',
-  },
-  {
-    date: new Date(Date.now() - 45 * 60000),
-    queueNumber: 'C008',
-    customerName: 'Sarah Wilson',
-    waitTime: 12,
-    status: 'completed',
-  },
-  {
-    date: new Date(Date.now() - 60 * 60000),
-    queueNumber: 'C007',
-    customerName: 'Michael Brown',
-    waitTime: 10,
-    status: 'completed',
-  },
-  {
-    date: new Date(Date.now() - 90 * 60000),
-    queueNumber: 'C006',
-    customerName: 'Emma Davis',
-    waitTime: 20,
-    status: 'cancelled',
-  },
-]);
+const queueHistory = ref([]);
 
 // Polling interval for queue updates
 let pollingInterval = null;
 
+// Create Queue Modal
+const showCreateQueueModal = ref(false);
+const newQueue = ref({
+  name: '',
+  description: '',
+  status: 'active',
+});
+const isCreatingQueue = ref(false);
+
 onMounted(async () => {
-  if (!userStore.branchId) {
+  if (!userStore.branchId || !vendorId.value) {
     // If not a branch staff, don't proceed
     return;
   }
@@ -349,11 +414,13 @@ onMounted(async () => {
   // Fetch branch details
   await fetchBranchDetails();
 
-  // Fetch initial queue data
-  await fetchQueueData();
+  // Fetch available queues
+  await fetchQueues();
 
-  // Start polling for queue updates
-  startPolling();
+  // Start polling for queue updates if a queue is selected
+  if (selectedQueueId.value) {
+    startPolling();
+  }
 });
 
 onBeforeUnmount(() => {
@@ -365,18 +432,68 @@ onBeforeUnmount(() => {
 
 // Start polling for queue updates
 const startPolling = () => {
+  // Clear existing polling interval if any
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+
   // Poll every 10 seconds for queue updates
   pollingInterval = setInterval(async () => {
-    await fetchQueueData();
+    if (selectedQueueId.value) {
+      await fetchQueueData();
+    }
   }, 10000);
 };
 
 // Fetch branch details
 const fetchBranchDetails = async () => {
-  // In a real app, this would make an API call
-  console.log(`Fetching details for branch ${branchId.value}`);
-  // Mock data
-  branchName.value = 'Silom';
+  try {
+    // Get branch info from user store
+    const branch = userStore.branchData;
+    branchName.value = branch?.branchName || 'Current';
+  } catch (error) {
+    console.error('Error fetching branch details:', error);
+    $toast.error('Failed to load branch details');
+  }
+};
+
+// Fetch available queues
+const fetchQueues = async () => {
+  isLoading.value = true;
+  try {
+    const response = await getQueuesByVendor(vendorId.value);
+    queues.value = response.data.queues || [];
+
+    // Select first queue by default if available and none is selected
+    if (queues.value.length > 0 && !selectedQueueId.value) {
+      selectedQueueId.value = queues.value[0].id;
+      await fetchQueueData();
+      startPolling();
+    }
+
+    if (queues.value.length === 0) {
+      $toast.info('No queues available for this branch');
+    }
+  } catch (error) {
+    console.error('Error fetching queues:', error);
+    $toast.error('Failed to load queues');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Refresh queues list
+const refreshQueues = async () => {
+  await fetchQueues();
+  $toast.success('Queues refreshed');
+};
+
+// Handle queue selection change
+const handleQueueChange = async () => {
+  if (selectedQueueId.value) {
+    await fetchQueueData();
+    startPolling();
+  }
 };
 
 // Toggle active tab
@@ -386,38 +503,112 @@ const setActiveTab = tab => {
 
 // Fetch queue data
 const fetchQueueData = async () => {
-  // In a real app, this would make an API call
+  if (!selectedQueueId.value) return;
+
+  isLoading.value = true;
   try {
-    console.log(`Fetching queue data for branch ${branchId.value}`);
+    const response = await getQueueStatus(selectedQueueId.value);
+    const data = response.data;
 
-    // Mock data
-    currentQueue.value = 'C011';
-    isActive.value = true;
+    // Update queue state
+    const queue = data.queue;
+    currentQueue.value =
+      queue.currentNumber > 0
+        ? `C${queue.currentNumber.toString().padStart(3, '0')}`
+        : null;
+    isActive.value = queue.status === 'active';
 
-    // Mock waiting queue data
-    waitingQueues.value = [
-      {
-        queueNumber: 'C012',
-        customerName: 'John Smith',
-        createdAt: new Date(Date.now() - 15 * 60000), // 15 minutes ago
-        partySize: 2,
-      },
-      {
-        queueNumber: 'C013',
-        customerName: 'Mary Johnson',
-        createdAt: new Date(Date.now() - 10 * 60000), // 10 minutes ago
-        partySize: 4,
-      },
-      {
-        queueNumber: 'C014',
-        customerName: 'Robert Brown',
-        createdAt: new Date(Date.now() - 5 * 60000), // 5 minutes ago
-        partySize: 3,
-      },
-    ];
+    // Update waiting queue items
+    waitingQueues.value = data.items.map(item => ({
+      queueNumber: `C${item.number.toString().padStart(3, '0')}`,
+      customerName: extractCustomerName(item.notes) || item.userId,
+      createdAt: new Date(item.joinedAt),
+      partySize: extractPartySize(item.notes) || 1,
+      userId: item.userId,
+      id: item.id,
+      estimatedWaitTime: item.estimatedWaitTime || 0,
+    }));
+
+    // Update statistics
+    customersServedToday.value = data.waitingCount || 0;
+    averageWaitTime.value = Math.round(queue.averageWaitTime) || 0;
+    queueEfficiency.value = calculateQueueEfficiency(queue) || 85;
+
+    // Fetch recent history - in a real app this would be part of the status API
+    await fetchQueueHistory();
   } catch (error) {
     console.error('Error fetching queue data:', error);
-    $toast.error('Failed to load queue data');
+    if (error.response?.status === 404) {
+      $toast.error('Queue not found or deleted');
+      selectedQueueId.value = '';
+    } else {
+      $toast.error('Failed to load queue data');
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Helper function to extract customer name from notes
+const extractCustomerName = notes => {
+  if (!notes) return null;
+  const nameMatch = notes.match(/Name: ([^,]+)/);
+  return nameMatch ? nameMatch[1].trim() : null;
+};
+
+// Helper function to extract party size from notes
+const extractPartySize = notes => {
+  if (!notes) return 1;
+  const sizeMatch = notes.match(/Party size: (\d+)/);
+  return sizeMatch ? parseInt(sizeMatch[1]) : 1;
+};
+
+// Calculate queue efficiency based on wait times and served customers
+const calculateQueueEfficiency = queue => {
+  // This is a simplified calculation that could be replaced with real metrics
+  // from the queue service in a production environment
+  if (queue.averageWaitTime > 30) return 60;
+  if (queue.averageWaitTime > 15) return 75;
+  if (queue.averageWaitTime > 5) return 90;
+  return 95;
+};
+
+// Fetch queue history data
+const fetchQueueHistory = async () => {
+  try {
+    // In a real app, this would be a dedicated API endpoint
+    // For now, we'll create mock history data based on current date
+    const today = new Date();
+    const mockHistory = [];
+
+    // Generate some reasonable mock history data
+    for (let i = 1; i <= 10; i++) {
+      const servedTime = new Date(today);
+      servedTime.setHours(today.getHours() - Math.floor(Math.random() * 8));
+      servedTime.setMinutes(
+        today.getMinutes() - Math.floor(Math.random() * 59)
+      );
+
+      const waitTime = 5 + Math.floor(Math.random() * 20);
+      const joinedTime = new Date(servedTime);
+      joinedTime.setMinutes(joinedTime.getMinutes() - waitTime);
+
+      mockHistory.push({
+        date: servedTime,
+        queueNumber: `C${(i * 10).toString().padStart(3, '0')}`,
+        customerName: `Customer ${i}`,
+        waitTime: waitTime,
+        status: Math.random() > 0.2 ? 'completed' : 'cancelled',
+      });
+    }
+
+    queueHistory.value = mockHistory.sort((a, b) => b.date - a.date);
+
+    // In the future, this would be replaced with:
+    // const historyResponse = await getQueueHistory(selectedQueueId.value);
+    // queueHistory.value = historyResponse.data.history;
+  } catch (error) {
+    console.error('Error fetching queue history:', error);
   }
 };
 
@@ -441,20 +632,16 @@ const formatDate = date => {
 
 // Queue control functions
 const nextQueue = async () => {
+  if (!selectedQueueId.value) {
+    $toast.warning('Please select a queue first');
+    return;
+  }
+
   isLoading.value = true;
   try {
-    // In a real app, this would make an API call
-    console.log('Moving to next customer in queue');
-
-    // Mock next queue behavior
-    if (waitingQueues.value.length > 0) {
-      currentQueue.value = waitingQueues.value[0].queueNumber;
-      waitingQueues.value.shift();
-      $toast.success('Called next customer');
-    } else {
-      currentQueue.value = null;
-      $toast.info('No more customers in queue');
-    }
+    await dequeueCustomer(selectedQueueId.value);
+    await fetchQueueData();
+    $toast.success('Called next customer');
   } catch (error) {
     console.error('Error moving to next queue:', error);
     $toast.error('Failed to move to next customer');
@@ -464,14 +651,16 @@ const nextQueue = async () => {
 };
 
 const toggleQueueStatus = async () => {
+  if (!selectedQueueId.value) {
+    $toast.warning('Please select a queue first');
+    return;
+  }
+
   isLoading.value = true;
   try {
-    // In a real app, this would make an API call
-    console.log(`${isActive.value ? 'Pausing' : 'Starting'} queue`);
-
-    // Toggle queue status
+    const newStatus = isActive.value ? 'paused' : 'active';
+    await updateQueue(selectedQueueId.value, { status: newStatus });
     isActive.value = !isActive.value;
-
     $toast.success(`Queue ${isActive.value ? 'started' : 'paused'}`);
   } catch (error) {
     console.error('Error toggling queue status:', error);
@@ -482,6 +671,11 @@ const toggleQueueStatus = async () => {
 };
 
 const resetQueue = async () => {
+  if (!selectedQueueId.value) {
+    $toast.warning('Please select a queue first');
+    return;
+  }
+
   // Confirm reset
   if (
     !confirm(
@@ -493,15 +687,28 @@ const resetQueue = async () => {
 
   isLoading.value = true;
   try {
-    // In a real app, this would make an API call
-    console.log('Resetting queue');
+    // First pause the queue
+    await updateQueue(selectedQueueId.value, {
+      status: 'paused',
+      currentNumber: 0,
+    });
 
-    // Reset queue
-    currentQueue.value = null;
-    waitingQueues.value = [];
-    isActive.value = false;
+    // Cancel all waiting customers one by one
+    const promises = waitingQueues.value.map(item =>
+      exitQueue(selectedQueueId.value, item.userId).catch(error => {
+        console.error(`Error removing customer ${item.queueNumber}:`, error);
+        // Continue with other customers even if one fails
+        return null;
+      })
+    );
 
-    $toast.success('Queue has been reset');
+    // Wait for all cancellations to complete
+    await Promise.allSettled(promises);
+
+    // Refresh queue data
+    await fetchQueueData();
+
+    $toast.success('Queue has been reset successfully');
   } catch (error) {
     console.error('Error resetting queue:', error);
     $toast.error('Failed to reset queue');
@@ -511,7 +718,10 @@ const resetQueue = async () => {
 };
 
 const cancelQueue = async () => {
-  if (!currentQueue.value) return;
+  if (!selectedQueueId.value || !currentQueue.value) {
+    $toast.warning('No active queue to cancel');
+    return;
+  }
 
   // Confirm cancel
   if (
@@ -524,11 +734,16 @@ const cancelQueue = async () => {
 
   isLoading.value = true;
   try {
-    // In a real app, this would make an API call
-    console.log(`Cancelling current queue: ${currentQueue.value}`);
-
-    // Cancel current queue
+    // In a real app, this would make a specific API call to cancel the current customer
+    // For now, we'll just call nextQueue without serving
+    await updateQueue(selectedQueueId.value, {
+      currentNumber: Math.max(
+        0,
+        parseInt(currentQueue.value?.substring(1) || '0') - 1
+      ),
+    });
     currentQueue.value = null;
+    await fetchQueueData();
 
     $toast.success('Current queue cancelled');
   } catch (error) {
@@ -539,24 +754,34 @@ const cancelQueue = async () => {
   }
 };
 
-const callQueue = async queueNumber => {
+const callQueue = async queue => {
+  if (!selectedQueueId.value) {
+    $toast.warning('Please select a queue first');
+    return;
+  }
+
   isLoading.value = true;
   try {
-    // In a real app, this would make an API call
-    console.log(`Calling queue number: ${queueNumber}`);
-
-    // Find and remove the queue from waiting list
+    // Find the queue item to call
+    const queueNumber = typeof queue === 'string' ? queue : queue.queueNumber;
     const index = waitingQueues.value.findIndex(
       q => q.queueNumber === queueNumber
     );
+
     if (index !== -1) {
-      const queue = waitingQueues.value[index];
-      waitingQueues.value.splice(index, 1);
+      // Get the number without the 'C' prefix and leading zeros
+      const customerNumber = parseInt(queueNumber.substring(1));
 
-      // Update current queue
-      currentQueue.value = queueNumber;
+      // Update the current queue number
+      await updateQueue(selectedQueueId.value, {
+        currentNumber: customerNumber,
+        status: 'active', // Ensure queue is active when calling a customer
+      });
 
-      $toast.success(`Called ${queue.customerName} (${queueNumber})`);
+      // Refresh queue data
+      await fetchQueueData();
+
+      $toast.success(`Called customer ${queueNumber}`);
     }
   } catch (error) {
     console.error('Error calling queue:', error);
@@ -566,53 +791,88 @@ const callQueue = async queueNumber => {
   }
 };
 
-const addCustomerToQueue = async () => {
+const cancelWaitingCustomer = async (itemId, queueNumber) => {
+  if (!selectedQueueId.value) {
+    $toast.warning('Please select a queue first');
+    return;
+  }
+
+  // Confirm cancel
+  if (
+    !confirm(
+      `Are you sure you want to remove ${queueNumber} from the waiting queue?`
+    )
+  ) {
+    return;
+  }
+
   isLoading.value = true;
   try {
-    // In a real app, this would make an API call
-    console.log('Adding customer to queue:', newCustomer.value);
+    // Get the user ID from waiting queues
+    const item = waitingQueues.value.find(q => q.id === itemId);
 
-    // Generate a new queue number
-    const nextQueueNumber = generateQueueNumber();
+    if (item) {
+      // Call the exit queue API
+      await exitQueue(selectedQueueId.value, item.userId);
 
-    // Add to waiting queue
-    waitingQueues.value.push({
-      queueNumber: nextQueueNumber,
-      customerName: newCustomer.value.name,
-      createdAt: new Date(),
-      partySize: parseInt(newCustomer.value.partySize),
-    });
+      // Refresh queue data
+      await fetchQueueData();
 
-    // Reset form
-    newCustomer.value = {
-      name: '',
-      phone: '',
-      partySize: '2',
-    };
-
-    $toast.success(`Added ${nextQueueNumber} to queue`);
+      $toast.success(`Removed ${queueNumber} from waiting queue`);
+    }
   } catch (error) {
-    console.error('Error adding customer to queue:', error);
-    $toast.error('Failed to add customer to queue');
+    console.error('Error cancelling waiting customer:', error);
+    $toast.error('Failed to remove customer from queue');
   } finally {
     isLoading.value = false;
   }
 };
 
-// Helper function to generate a new queue number
-const generateQueueNumber = () => {
-  // In a real app, this would be generated by the backend
-  const prefix = 'C';
-  const last =
-    waitingQueues.value.length > 0
-      ? parseInt(
-          waitingQueues.value[
-            waitingQueues.value.length - 1
-          ].queueNumber.substring(1)
-        )
-      : parseInt(currentQueue.value?.substring(1) || '0');
-  const next = (last + 1).toString().padStart(3, '0');
-  return `${prefix}${next}`;
+const createNewQueue = async () => {
+  if (!newQueue.value.name.trim()) {
+    $toast.warning('Queue name is required');
+    return;
+  }
+
+  isCreatingQueue.value = true;
+  try {
+    // Create the queue using the API
+    const queueData = {
+      name: newQueue.value.name,
+      description: newQueue.value.description,
+      status: newQueue.value.status,
+      vendorId: vendorId.value,
+      branchId: userStore.branchId, // Add branch ID from user store
+    };
+
+    const response = await createQueue(queueData);
+
+    // Reset form
+    newQueue.value = {
+      name: '',
+      description: '',
+      status: 'active',
+    };
+
+    // Close modal
+    showCreateQueueModal.value = false;
+
+    // Refresh queues list
+    await fetchQueues();
+
+    // Select the newly created queue
+    if (response.data && response.data.queue) {
+      selectedQueueId.value = response.data.queue.id;
+      await fetchQueueData();
+    }
+
+    $toast.success('New queue created successfully');
+  } catch (error) {
+    console.error('Error creating new queue:', error);
+    $toast.error('Failed to create new queue');
+  } finally {
+    isCreatingQueue.value = false;
+  }
 };
 </script>
 
@@ -634,6 +894,64 @@ const generateQueueNumber = () => {
 .branch-name {
   color: #666;
   font-size: 16px;
+}
+
+.queue-selector {
+  margin-bottom: 16px;
+}
+
+.queue-selection-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.queue-dropdown {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.queue-dropdown label {
+  font-weight: 500;
+  margin-right: 8px;
+  white-space: nowrap;
+}
+
+.queue-dropdown select {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: auto;
+}
+
+.queue-dropdown button {
+  padding: 8px 16px;
+  background-color: #6b9080;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 8px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.create-btn {
+  padding: 8px 16px;
+  background-color: #6b9080;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 16px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .unauthorized-message {
@@ -929,6 +1247,7 @@ const generateQueueNumber = () => {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 24px;
+  grid-column: 1 / -1;
 }
 
 .waiting-queue-section h2 {
@@ -975,9 +1294,32 @@ const generateQueueNumber = () => {
   font-weight: 500;
 }
 
-.wait-time {
+.queue-details {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
   font-size: 14px;
   color: #666;
+}
+
+.info-icon {
+  font-size: 14px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.wait-time,
+.party-size,
+.est-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .call-btn {
@@ -990,6 +1332,23 @@ const generateQueueNumber = () => {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.cancel-wait-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #f8f9fa;
+  color: #e53e3e;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-wait-btn:hover {
+  background-color: #fee2e2;
 }
 
 .add-queue-section {
@@ -1066,5 +1425,118 @@ const generateQueueNumber = () => {
   .queue-stats-section {
     grid-template-columns: 1fr;
   }
+
+  .queue-selection-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .queue-dropdown {
+    flex-wrap: wrap;
+  }
+
+  .queue-dropdown select {
+    flex-grow: 1;
+  }
+
+  .queue-dropdown button,
+  .create-btn {
+    margin-left: 0;
+  }
+
+  .create-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .queue-dropdown label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin-bottom: 24px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cancel-btn {
+  padding: 10px 16px;
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background-color: #6b9080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.create-btn:disabled,
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Update existing styles for form inputs */
+textarea {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
 }
 </style>

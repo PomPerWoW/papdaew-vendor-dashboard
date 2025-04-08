@@ -1009,6 +1009,7 @@ const submitForm = async () => {
     };
 
     // Register the vendor
+    console.log('vendorData', vendorData);
     const vendorResponse = await registerVendor(vendorData);
     const vendorId = vendorResponse.data.id;
 

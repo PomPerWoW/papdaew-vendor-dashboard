@@ -12,7 +12,10 @@ import QueueVendor from '@/views/QueueVendor.vue';
 import Login from '@/views/Login.vue';
 import UnauthorizedAccess from '@/views/UnauthorizedAccess.vue';
 import Signup from '@/views/Signup.vue';
+import BranchStaffSignup from '@/views/BranchStaffSignup.vue';
 import { verifyAuth, getCurrentUser } from '../lib/api.js';
+import BranchRatings from '@/views/BranchRatings.vue';
+import AllQueuesView from '@/views/AllQueuesView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,6 +46,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/branch-staff-signup',
+      name: 'branch-staff-signup',
+      component: BranchStaffSignup,
+      meta: {
+        hideSidebar: true,
+        role: 'vendor',
+        requiresRootAccount: true, // Only root accounts can create branch staff
+      },
+    },
+    {
       path: '/branch',
       name: 'branch',
       component: BranchVendor,
@@ -50,6 +63,12 @@ const router = createRouter({
         role: 'vendor',
         requiresRootAccount: true, // Only root accounts can manage branches
       },
+    },
+    {
+      path: '/branch-ratings',
+      name: 'branch-ratings',
+      component: BranchRatings,
+      meta: { role: 'vendor' },
     },
     {
       path: '/customer-vendor',
@@ -106,6 +125,12 @@ const router = createRouter({
       meta: {
         hideSidebar: true,
       },
+    },
+    {
+      path: '/all-queues',
+      name: 'all-queues',
+      component: AllQueuesView,
+      meta: { role: 'vendor' },
     },
   ],
 });

@@ -9,6 +9,13 @@
       </div>
 
       <form @submit.prevent="submitForm" class="branch-form">
+        <!-- Debug button - only visible in development -->
+        <div class="debug-section" v-if="isDevelopment">
+          <button type="button" class="debug-button" @click="prefillTestData">
+            Prefill Test Data (Development Only)
+          </button>
+        </div>
+
         <div class="form-section">
           <h3 class="section-title">Branch Details</h3>
 
@@ -44,6 +51,45 @@
               </select>
               <small v-if="submitted && !formData.type" class="error-text">
                 Branch type is required
+              </small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="branchCode">Branch Code*</label>
+              <input
+                id="branchCode"
+                v-model="formData.branchCode"
+                type="text"
+                class="form-input"
+                :class="{ 'input-error': submitted && !formData.branchCode }"
+                placeholder="Enter branch code (e.g. BKK001)"
+              />
+              <small
+                v-if="submitted && !formData.branchCode"
+                class="error-text"
+              >
+                Branch code is required
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="status">Status*</label>
+              <select
+                id="status"
+                v-model="formData.status"
+                class="form-input"
+                :class="{ 'input-error': submitted && !formData.status }"
+              >
+                <option value="" disabled selected>Select status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="temporary-closed">Temporarily Closed</option>
+                <option value="coming-soon">Coming Soon</option>
+              </select>
+              <small v-if="submitted && !formData.status" class="error-text">
+                Status is required
               </small>
             </div>
           </div>
@@ -118,21 +164,173 @@
               </small>
             </div>
           </div>
+        </div>
 
-          <div class="form-group full-width">
-            <label for="address">Address*</label>
-            <textarea
-              id="address"
-              v-model="formData.address"
-              rows="3"
-              class="form-input"
-              :class="{ 'input-error': submitted && !formData.address }"
-              placeholder="Enter branch address"
-            ></textarea>
-            <small v-if="submitted && !formData.address" class="error-text">
-              Address is required
-            </small>
+        <div class="form-section">
+          <h3 class="section-title">Location Details</h3>
+
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="addressLine1">Address Line 1*</label>
+              <input
+                id="addressLine1"
+                v-model="formData.addressLine1"
+                type="text"
+                class="form-input"
+                :class="{ 'input-error': submitted && !formData.addressLine1 }"
+                placeholder="Street address, building name, floor, etc."
+              />
+              <small
+                v-if="submitted && !formData.addressLine1"
+                class="error-text"
+              >
+                Address line 1 is required
+              </small>
+            </div>
           </div>
+
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label for="addressLine2">Address Line 2 (Optional)</label>
+              <input
+                id="addressLine2"
+                v-model="formData.addressLine2"
+                type="text"
+                class="form-input"
+                placeholder="Additional address details"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="subdistrict">Subdistrict*</label>
+              <input
+                id="subdistrict"
+                v-model="formData.subdistrict"
+                type="text"
+                class="form-input"
+                :class="{ 'input-error': submitted && !formData.subdistrict }"
+                placeholder="Enter subdistrict"
+              />
+              <small
+                v-if="submitted && !formData.subdistrict"
+                class="error-text"
+              >
+                Subdistrict is required
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="district">District*</label>
+              <input
+                id="district"
+                v-model="formData.district"
+                type="text"
+                class="form-input"
+                :class="{ 'input-error': submitted && !formData.district }"
+                placeholder="Enter district"
+              />
+              <small v-if="submitted && !formData.district" class="error-text">
+                District is required
+              </small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="province">Province*</label>
+              <input
+                id="province"
+                v-model="formData.province"
+                type="text"
+                class="form-input"
+                :class="{ 'input-error': submitted && !formData.province }"
+                placeholder="Enter province"
+              />
+              <small v-if="submitted && !formData.province" class="error-text">
+                Province is required
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label for="postalCode">Postal Code*</label>
+              <input
+                id="postalCode"
+                v-model="formData.postalCode"
+                type="text"
+                class="form-input"
+                :class="{ 'input-error': submitted && !formData.postalCode }"
+                placeholder="Enter 5-digit postal code"
+              />
+              <small
+                v-if="submitted && !formData.postalCode"
+                class="error-text"
+              >
+                Postal code is required
+              </small>
+              <small
+                v-else-if="submitted && !isValidPostalCode"
+                class="error-text"
+              >
+                Please enter a valid 5-digit postal code
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">Business Hours</h3>
+          <div class="operating-hours-container">
+            <div
+              v-for="(dayHours, index) in formData.businessHours"
+              :key="index"
+              class="day-hours"
+            >
+              <div class="day-name">{{ getDayName(dayHours.day) }}</div>
+              <div class="hours-inputs">
+                <div class="closed-toggle">
+                  <label class="checkbox-container">
+                    Closed
+                    <input
+                      type="checkbox"
+                      v-model="dayHours.isClosed"
+                      @change="validateHours(dayHours)"
+                    />
+                    <span class="checkmark"></span>
+                  </label>
+                </div>
+                <div
+                  class="time-inputs"
+                  :class="{ disabled: dayHours.isClosed }"
+                >
+                  <input
+                    type="time"
+                    v-model="dayHours.open"
+                    class="time-input"
+                    :disabled="dayHours.isClosed"
+                    :class="{
+                      'input-error': submitted && !isHoursValid(dayHours),
+                    }"
+                  />
+                  <span class="time-separator">to</span>
+                  <input
+                    type="time"
+                    v-model="dayHours.close"
+                    class="time-input"
+                    :disabled="dayHours.isClosed"
+                    :class="{
+                      'input-error': submitted && !isHoursValid(dayHours),
+                    }"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <small v-if="submitted && !areBusinessHoursValid" class="error-text">
+            Please enter valid operating hours. Opening time must be before
+            closing time.
+          </small>
         </div>
 
         <div class="form-section">
@@ -196,6 +394,9 @@
 import { ref, computed, watch } from 'vue';
 import { Icon } from '@iconify/vue';
 
+// Check if in development mode (hardcoded for now)
+const isDevelopment = ref(true); // This can be toggled to hide/show debug features
+
 // Define props and emits
 const props = defineProps({
   isOpen: Boolean,
@@ -211,11 +412,28 @@ const emit = defineEmits(['close', 'branch-added', 'branch-updated']);
 const defaultFormData = {
   name: '',
   type: '',
+  branchCode: '',
   manager: '',
   email: '',
   phone: '',
   hours: '',
-  address: '',
+  addressLine1: '',
+  addressLine2: '',
+  subdistrict: '',
+  district: '',
+  province: '',
+  postalCode: '',
+  status: 'active',
+  locationId: '000000000000000000000000', // Placeholder, to be replaced with actual location ID
+  businessHours: [
+    { day: 0, open: '10:00', close: '22:00', isClosed: false }, // Sunday
+    { day: 1, open: '10:00', close: '22:00', isClosed: false }, // Monday
+    { day: 2, open: '10:00', close: '22:00', isClosed: false }, // Tuesday
+    { day: 3, open: '10:00', close: '22:00', isClosed: false }, // Wednesday
+    { day: 4, open: '10:00', close: '22:00', isClosed: false }, // Thursday
+    { day: 5, open: '10:00', close: '22:00', isClosed: false }, // Friday
+    { day: 6, open: '10:00', close: '22:00', isClosed: false }, // Saturday
+  ],
 };
 
 const formData = ref({ ...defaultFormData });
@@ -244,6 +462,60 @@ const isValidEmail = computed(() => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(formData.value.email);
 });
+
+// Postal code validation
+const isValidPostalCode = computed(() => {
+  if (!formData.value.postalCode) return false;
+  const postalCodeRegex = /^\d{5}$/;
+  return postalCodeRegex.test(formData.value.postalCode);
+});
+
+// Business hours validation
+const isHoursValid = dayHours => {
+  if (dayHours.isClosed) return true;
+  return dayHours.open && dayHours.close && dayHours.open < dayHours.close;
+};
+
+const areBusinessHoursValid = computed(() => {
+  if (
+    !formData.value.businessHours ||
+    !Array.isArray(formData.value.businessHours)
+  ) {
+    return false;
+  }
+
+  return formData.value.businessHours.every(day => {
+    if (day.isClosed) return true;
+    return day.open && day.close && day.open < day.close;
+  });
+});
+
+// Helper to get day name
+const getDayName = dayIndex => {
+  const days = [
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+  ];
+  return days[dayIndex];
+};
+
+// Validate hours when toggling closed state
+const validateHours = dayHours => {
+  if (dayHours.isClosed) {
+    // If closed, reset the hours
+    dayHours.open = '';
+    dayHours.close = '';
+  } else {
+    // If opened and hours are empty, set default
+    if (!dayHours.open) dayHours.open = '10:00';
+    if (!dayHours.close) dayHours.close = '22:00';
+  }
+};
 
 // Handle image selection
 const onImageSelect = event => {
@@ -279,19 +551,43 @@ const submitForm = () => {
   if (
     !formData.value.name ||
     !formData.value.type ||
+    !formData.value.branchCode ||
     !formData.value.manager ||
     !formData.value.email ||
     !formData.value.phone ||
-    !formData.value.hours ||
-    !formData.value.address ||
-    !isValidEmail.value
+    !formData.value.addressLine1 ||
+    !formData.value.district ||
+    !formData.value.subdistrict ||
+    !formData.value.province ||
+    !formData.value.postalCode ||
+    !formData.value.status ||
+    !isValidEmail.value ||
+    !isValidPostalCode.value ||
+    !areBusinessHoursValid.value
   ) {
     return;
   }
 
+  // Construct a full address for display in the branch card
+  const fullAddress = [
+    formData.value.addressLine1,
+    formData.value.addressLine2,
+    formData.value.subdistrict,
+    formData.value.district,
+    formData.value.province,
+    formData.value.postalCode,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
   // Create branch data object
   const branchData = {
     ...formData.value,
+    branchName: formData.value.name,
+    branchManager: formData.value.manager,
+    contactPhone: formData.value.phone,
+    contactEmail: formData.value.email,
+    address: fullAddress, // Include full address for display
     image: imagePreview.value,
   };
 
@@ -304,6 +600,36 @@ const submitForm = () => {
 
   // Close modal and reset form
   closeModal();
+};
+
+// Prefill form with test data (for development)
+const prefillTestData = () => {
+  formData.value = {
+    name: 'KFC Siam Square',
+    branchCode: 'BKK001',
+    type: 'main',
+    manager: 'Somchai Jaidee',
+    email: 'siamsquare@kfcthailand.com',
+    phone: '+6622345680',
+    addressLine1: '989 Rama I Rd',
+    addressLine2: 'Siam Square',
+    subdistrict: 'Pathum Wan',
+    district: 'Pathum Wan',
+    province: 'Bangkok',
+    postalCode: '10330',
+    status: 'active',
+    locationId: '000000000000000000000000', // Will be replaced after location creation
+    businessHours: [
+      { day: 0, open: '10:00', close: '22:00', isClosed: false }, // Sunday
+      { day: 1, open: '10:00', close: '22:00', isClosed: false }, // Monday
+      { day: 2, open: '10:00', close: '22:00', isClosed: false }, // Tuesday
+      { day: 3, open: '10:00', close: '22:00', isClosed: false }, // Wednesday
+      { day: 4, open: '10:00', close: '22:00', isClosed: false }, // Thursday
+      { day: 5, open: '10:00', close: '23:00', isClosed: false }, // Friday
+      { day: 6, open: '10:00', close: '23:00', isClosed: false }, // Saturday
+    ],
+    hours: '10:00 AM - 10:00 PM',
+  };
 };
 
 // Close modal and reset form
@@ -536,6 +862,127 @@ label {
   color: #888;
 }
 
+/* Operating hours styles */
+.operating-hours-container {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.day-hours {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+}
+
+.day-hours:last-child {
+  border-bottom: none;
+}
+
+.day-name {
+  width: 100px;
+  font-weight: 500;
+  color: #333;
+}
+
+.hours-inputs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closed-toggle {
+  margin-right: 15px;
+}
+
+.time-inputs {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.time-inputs.disabled {
+  opacity: 0.5;
+}
+
+.time-input {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 6px 10px;
+  width: 120px;
+  color: #333;
+  background-color: white;
+}
+
+.time-separator {
+  margin: 0 15px;
+  color: #666;
+}
+
+/* Checkbox styling */
+.checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+  color: #555;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 18px;
+  width: 18px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #e8e8e8;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: #6b9080;
+  border-color: #6b9080;
+}
+
+.checkmark:after {
+  content: '';
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 /* Form actions */
 .form-actions {
   display: flex;
@@ -576,6 +1023,31 @@ label {
 
 .submit-button:hover {
   background-color: #5a7b6c;
+}
+
+/* Debug section styles */
+.debug-section {
+  background-color: #f8f9fa;
+  border: 1px dashed #dc3545;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.debug-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.debug-button:hover {
+  background-color: #c82333;
 }
 
 @media (max-width: 768px) {

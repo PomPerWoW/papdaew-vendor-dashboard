@@ -3,34 +3,41 @@
     <div class="card-image">
       <img
         :src="branch.image || 'https://via.placeholder.com/400x200'"
-        :alt="branch.name"
+        :alt="branch.branchName || branch.name"
       />
       <div class="type-badge" :class="branch.type">
         {{ branch.typeLabel || 'Branch' }}
       </div>
+      <div v-if="branch.status" class="status-badge" :class="branch.status">
+        {{ formatStatus(branch.status) }}
+      </div>
     </div>
     <div class="card-content">
       <div class="card-header">
-        <h3>{{ branch.name }}</h3>
+        <h3>{{ branch.branchName || branch.name }}</h3>
+        <div class="branch-code">{{ branch.branchCode || 'No Code' }}</div>
         <div class="hours">
           <Icon icon="material-symbols:schedule" class="hours-icon" />
-          <span>{{ branch.hours }}</span>
+          <span>{{ formatHours(branch) }}</span>
         </div>
       </div>
 
       <div class="detail-row">
         <Icon icon="material-symbols:person" class="detail-icon" />
-        <span><strong>Manager:</strong> {{ branch.manager }}</span>
+        <span
+          ><strong>Manager:</strong>
+          {{ branch.branchManager || branch.manager }}</span
+        >
       </div>
 
       <div class="detail-row">
         <Icon icon="material-symbols:call" class="detail-icon" />
-        <span>{{ branch.phone }}</span>
+        <span>{{ branch.contactPhone || branch.phone }}</span>
       </div>
 
       <div class="detail-row">
         <Icon icon="material-symbols:mail" class="detail-icon" />
-        <span>{{ branch.email }}</span>
+        <span>{{ branch.contactEmail || branch.email }}</span>
       </div>
 
       <div class="detail-row address">
@@ -39,6 +46,10 @@
       </div>
 
       <div class="card-actions">
+        <button class="action-btn staff" @click="$emit('add-staff', branch)">
+          <Icon icon="material-symbols:person-add" width="18" height="18" />
+          <span>Add Staff</span>
+        </button>
         <button class="action-btn edit" @click="$emit('edit', branch)">
           <Icon icon="material-symbols:edit" width="18" height="18" />
           <span>Edit</span>
@@ -61,21 +72,79 @@ defineProps({
     type: Object,
     required: true,
     default: () => ({
-      name: 'Branch Name',
+      branchName: 'Branch Name',
+      branchCode: 'BKK001',
       type: 'main',
       typeLabel: 'Main Branch',
-      manager: 'Manager Name',
-      email: 'email@example.com',
-      phone: '+66 123 456 789',
+      branchManager: 'Manager Name',
+      contactEmail: 'email@example.com',
+      contactPhone: '+66 123 456 789',
       address: 'Address information',
       hours: '9:00 AM - 9:00 PM',
+      status: 'active',
+      businessHours: [
+        { day: 1, open: '09:00', close: '18:00', isClosed: false },
+      ],
       image: 'https://via.placeholder.com/400x200',
     }),
   },
 });
 
+// Format status string for display
+const formatStatus = status => {
+  if (!status) return '';
+
+  switch (status) {
+    case 'active':
+      return 'Active';
+    case 'inactive':
+      return 'Inactive';
+    case 'temporary-closed':
+      return 'Temporarily Closed';
+    case 'coming-soon':
+      return 'Coming Soon';
+    default:
+      return status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+};
+
+// Format hours string from businessHours array
+const formatHours = branch => {
+  // If hours string already exists, use it
+  if (branch.hours) return branch.hours;
+
+  // Otherwise, generate from businessHours
+  if (
+    branch.businessHours &&
+    Array.isArray(branch.businessHours) &&
+    branch.businessHours.length > 0
+  ) {
+    // Find today's hours (using current day of week)
+    const today = new Date().getDay();
+    const todayHours = branch.businessHours.find(h => h.day === today);
+
+    if (todayHours) {
+      if (todayHours.isClosed) return 'Closed Today';
+
+      // Format 24h time to 12h time
+      const formatTime = time => {
+        if (!time) return '';
+        const [hours, minutes] = time.split(':');
+        const h = parseInt(hours, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hour = h % 12 || 12;
+        return `${hour}:${minutes} ${ampm}`;
+      };
+
+      return `${formatTime(todayHours.open)} - ${formatTime(todayHours.close)}`;
+    }
+  }
+
+  return 'Hours not available';
+};
+
 // Define events that this component emits
-defineEmits(['edit', 'delete']);
+defineEmits(['edit', 'delete', 'add-staff']);
 </script>
 
 <style scoped>
@@ -125,6 +194,40 @@ defineEmits(['edit', 'delete']);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.status-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: #e0e0e0;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge.active {
+  background-color: #81c784;
+  color: white;
+}
+
+.status-badge.inactive {
+  background-color: #e0e0e0;
+  color: #555;
+}
+
+.status-badge.temporary-closed {
+  background-color: #ffb74d;
+  color: white;
+}
+
+.status-badge.coming-soon {
+  background-color: #64b5f6;
+  color: white;
+}
+
 .type-badge.main {
   background-color: #6b9080;
 }
@@ -155,6 +258,12 @@ defineEmits(['edit', 'delete']);
   font-size: 18px;
   font-weight: 600;
   color: #333;
+}
+
+.branch-code {
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 4px;
 }
 
 .hours {
@@ -209,6 +318,15 @@ defineEmits(['edit', 'delete']);
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+
+.action-btn.staff {
+  background-color: #e6f0f7;
+  color: #4a6fa5;
+}
+
+.action-btn.staff:hover {
+  background-color: #d6e6f2;
 }
 
 .action-btn.edit {
